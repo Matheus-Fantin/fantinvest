@@ -47,4 +47,27 @@ class OrcamentoTest extends TestCase
         $this->actingAs(User::factory()->create())->delete("/orcamento/{$lancamento->id}")->assertForbidden();
         $this->assertModelExists($lancamento);
     }
+
+    public function test_edita_lancamento(): void
+    {
+        $user = User::factory()->create();
+        $lancamento = $user->transactions()->create(['tipo' => 'despesa', 'data' => '2026-10-05', 'categoria' => 'Mercado', 'valor' => 50]);
+
+        $this->actingAs($user)->put("/orcamento/{$lancamento->id}", ['tipo' => 'despesa', 'data' => '2026-09-30', 'categoria' => 'Restaurantes', 'descricao' => 'Jantar', 'valor' => '1.234,50'])
+            ->assertRedirect(route('orcamento.index', ['mes' => '2026-09']));
+
+        $lancamento->refresh();
+        $this->assertSame('Restaurantes', $lancamento->categoria);
+        $this->assertEquals(1234.5, $lancamento->valor);
+        $this->assertSame('2026-09-30', $lancamento->data->format('Y-m-d'));
+    }
+
+    public function test_nao_edita_lancamento_de_outro_usuario(): void
+    {
+        $lancamento = User::factory()->create()->transactions()->create(['tipo' => 'despesa', 'data' => '2026-10-05', 'categoria' => 'Mercado', 'valor' => 50]);
+
+        $this->actingAs(User::factory()->create())
+            ->put("/orcamento/{$lancamento->id}", ['tipo' => 'despesa', 'data' => '2026-10-05', 'categoria' => 'Mercado', 'valor' => '1'])
+            ->assertForbidden();
+    }
 }

@@ -175,16 +175,12 @@ class CarteiraService
                 /** @var Asset $ativo */
                 $ativo = $compra['ativo'];
 
-                if ($compra['cotas'] === null) {
-                    // Renda fixa e cripto: soma o valor ao saldo.
-                    $ativo->quantidade = $ativo->quantidade ?: 1;
-                    $ativo->preco_medio += $compra['valor'] / $ativo->quantidade;
-                    $ativo->cotacao += $compra['valor'] / $ativo->quantidade;
-                } else {
-                    $novaQtd = $ativo->quantidade + $compra['cotas'];
-                    $ativo->preco_medio = ($ativo->quantidade * $ativo->preco_medio + $compra['cotas'] * $ativo->cotacao) / $novaQtd;
-                    $ativo->quantidade = $novaQtd;
-                }
+                // Cotas inteiras (B3) ou valor livre (renda fixa e cripto): em ambos os casos a
+                // quantidade cresce e o preço médio vira a média ponderada pelo que foi pago.
+                $novaQtd = $compra['cotas'] ?? $compra['valor'] / $ativo->cotacao;
+                $quantidade = $ativo->quantidade + $novaQtd;
+                $ativo->preco_medio = ($ativo->quantidade * $ativo->preco_medio + $compra['valor']) / $quantidade;
+                $ativo->quantidade = $quantidade;
 
                 $ativo->save();
                 $total += $compra['valor'];

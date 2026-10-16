@@ -9,6 +9,7 @@ class Asset extends Model
 {
     protected $fillable = [
         'user_id', 'ticker', 'classe', 'quantidade', 'preco_medio', 'cotacao', 'nota', 'criterios',
+        'atualizacao_automatica', 'variacao_dia', 'cotacao_atualizada_em',
     ];
 
     protected function casts(): array
@@ -19,6 +20,9 @@ class Asset extends Model
             'cotacao' => 'float',
             'nota' => 'float',
             'criterios' => 'array',
+            'atualizacao_automatica' => 'boolean',
+            'variacao_dia' => 'float',
+            'cotacao_atualizada_em' => 'datetime',
         ];
     }
 
@@ -42,6 +46,12 @@ class Asset extends Model
     public function resultadoPercentual(): float
     {
         return $this->custo() > 0 ? ($this->valor() / $this->custo() - 1) * 100 : 0;
+    }
+
+    /** A cotação deste ativo pode vir de uma API (B3 ou cripto)? */
+    public function temFonteAutomatica(): bool
+    {
+        return isset(config('cotacoes.fontes')[$this->classe]);
     }
 
     public function nomeClasse(): string

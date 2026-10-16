@@ -18,7 +18,10 @@ class StoreAssetRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->normalizarNumeros(['quantidade', 'preco_medio', 'cotacao', 'nota']);
-        $this->merge(['ticker' => mb_strtoupper(trim((string) $this->input('ticker')))]);
+        $this->merge([
+            'ticker' => mb_strtoupper(trim((string) $this->input('ticker'))),
+            'atualizacao_automatica' => $this->boolean('atualizacao_automatica'),
+        ]);
     }
 
     public function rules(): array
@@ -30,6 +33,7 @@ class StoreAssetRequest extends FormRequest
             'preco_medio' => ['required', 'numeric', 'min:0'],
             'cotacao' => ['nullable', 'numeric', 'min:0'],
             'nota' => ['required', 'numeric', 'between:0,10'],
+            'atualizacao_automatica' => ['boolean'],
         ];
     }
 

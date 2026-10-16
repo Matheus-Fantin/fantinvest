@@ -3,6 +3,7 @@
     $categoriasDespesa = config('financas.categorias_despesa');
     $base = $resumo['receitas'] ?: 1;
     $corGrupo = ['ess' => 's1', 'des' => 's2', 'inv' => 's3'];
+    // Linhas da tabela: editar e excluir usam estes dados.
     $hoje = now()->format('Y-m');
     $categoriasGrafico = collect($resumo['categorias'])->map(fn ($v, $c) => ['nome' => $c, 'valor' => $v, 'grupo' => $categoriasDespesa[$c] ?? 'des'])->values();
 @endphp
@@ -13,10 +14,13 @@
             <h1>Controle do mês</h1>
             <p>Lance receitas e gastos. A regra 50/30/20 compara seus gastos com a renda: 50% essenciais, 30% estilo de vida, 20% investimentos.</p>
         </div>
+        <div class="row">
+        <a class="btn" href="{{ route('orcamento.importar') }}"><x-icone nome="upload" />Importar extrato</a>
         <div class="month-nav">
             <a class="btn icon" href="{{ route('orcamento.index', ['mes' => $anterior]) }}" aria-label="Mês anterior"><x-icone nome="left" /></a>
             <strong>{{ mes_extenso($mes) }}</strong>
             <a class="btn icon" href="{{ route('orcamento.index', ['mes' => $proximo]) }}" aria-label="Próximo mês"><x-icone nome="right" /></a>
+        </div>
         </div>
     </div>
 
@@ -104,7 +108,13 @@
             <button class="btn primary" type="submit"><x-icone nome="plus" />Lançar</button>
         </form>
 
-        <div class="card" x-data="{ alvo: null }">
+        <div class="card" x-data="{
+                alvo: null,
+                edicao: { id: null, tipo: 'despesa', data: '', categoria: '', descricao: '', valor: '' },
+                cats: { receita: @js(config('financas.categorias_receita')), despesa: @js(array_keys($categoriasDespesa)) },
+                editar(t) { this.edicao = { ...t }; $dispatch('open-modal', 'editar-lancamento') },
+                trocarTipo(tipo) { this.edicao.tipo = tipo; if (!this.cats[tipo].includes(this.edicao.categoria)) this.edicao.categoria = this.cats[tipo][0] },
+             }">
             <div class="card-head"><div><h2>Lançamentos</h2><p>{{ $lancamentos->count() }} no mês</p></div></div>
             @if ($lancamentos->isEmpty())
                 <div class="empty">
@@ -125,6 +135,10 @@
                                     <td class="n {{ $t->tipo === 'receita' ? 'up' : '' }}"><strong>{{ $t->tipo === 'receita' ? '+' : '−' }}{{ brl($t->valor) }}</strong></td>
                                     <td>
                                         <div class="row-actions">
+                                            <button type="button" class="btn icon ghost" aria-label="Editar lançamento"
+                                                    x-on:click="editar(@js(['id' => $t->id, 'tipo' => $t->tipo, 'data' => $t->data->format('Y-m-d'), 'categoria' => $t->categoria, 'descricao' => $t->descricao, 'valor' => valor_input($t->valor)]))">
+                                                <x-icone nome="edit" />
+                                            </button>
                                             <button type="button" class="btn icon ghost" aria-label="Excluir lançamento"
                                                     x-on:click="alvo = @js(['id' => $t->id, 'texto' => ($t->descricao ?: $t->categoria).' · '.brl($t->valor)]); $dispatch('open-modal', 'excluir-lancamento')">
                                                 <x-icone nome="trash" />
@@ -137,6 +151,37 @@
                     </table>
                 </div>
             @endif
+
+            <x-modal name="editar-lancamento">
+                <form method="POST" :action="'{{ url('orcamento') }}/' + edicao.id" class="stack" autocomplete="off">
+                    @csrf
+                    @method('PUT')
+                    <div class="row between">
+                        <h2>Editar lançamento</h2>
+                        <button type="button" class="btn icon ghost" x-on:click="$dispatch('close-modal', 'editar-lancamento')" aria-label="Fechar"><x-icone nome="x" /></button>
+                    </div>
+                    <input type="hidden" name="tipo" :value="edicao.tipo">
+                    <div class="seg" role="group" aria-label="Tipo">
+                        <button type="button" x-on:click="trocarTipo('despesa')" :aria-pressed="edicao.tipo === 'despesa'">Gasto</button>
+                        <button type="button" x-on:click="trocarTipo('receita')" :aria-pressed="edicao.tipo === 'receita'">Receita</button>
+                    </div>
+                    <div class="form-grid">
+                        <div class="field"><label for="eData">Data</label><input class="in" type="date" id="eData" name="data" x-model="edicao.data" required></div>
+                        <div class="field"><label for="eValor">Valor</label><div class="in-group"><span class="affix">R$</span><input class="in" id="eValor" name="valor" inputmode="decimal" x-model="edicao.valor" required></div></div>
+                        <div class="field full">
+                            <label for="eCat">Categoria</label>
+                            <select class="in" id="eCat" name="categoria" x-model="edicao.categoria">
+                                <template x-for="c in cats[edicao.tipo]" :key="edicao.tipo + c"><option :value="c" x-text="c" :selected="c === edicao.categoria"></option></template>
+                            </select>
+                        </div>
+                        <div class="field full"><label for="eDesc">Descrição</label><input class="in" id="eDesc" name="descricao" x-model="edicao.descricao" maxlength="80"></div>
+                    </div>
+                    <div class="row" style="justify-content:flex-end">
+                        <button type="button" class="btn" x-on:click="$dispatch('close-modal', 'editar-lancamento')">Cancelar</button>
+                        <button class="btn primary" type="submit">Salvar</button>
+                    </div>
+                </form>
+            </x-modal>
 
             <x-modal name="excluir-lancamento">
                 <form method="POST" :action="'{{ url('orcamento') }}/' + alvo?.id" class="stack">

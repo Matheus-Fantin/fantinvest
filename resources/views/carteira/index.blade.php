@@ -2,11 +2,13 @@
     $classes = config('financas.classes');
     $somaMetas = array_sum($metas);
     $notaCls = fn ($n) => $n >= 8 ? 'hi' : ($n >= 5 ? 'mid' : 'lo');
-    $vazio = ['id' => null, 'ticker' => '', 'classe' => $filtro !== 'todas' ? $filtro : 'acoes', 'quantidade' => '', 'preco_medio' => '', 'cotacao' => '', 'nota' => '7'];
+    $vazio = ['id' => null, 'ticker' => '', 'classe' => $filtro !== 'todas' ? $filtro : 'acoes', 'quantidade' => '', 'preco_medio' => '', 'cotacao' => '', 'nota' => '7', 'atualizacao_automatica' => true];
+    $comApi = array_keys(config('cotacoes.fontes'));
     $paraForm = fn ($a) => [
         'id' => $a->id, 'ticker' => $a->ticker, 'classe' => $a->classe,
         'quantidade' => valor_input($a->quantidade, 8), 'preco_medio' => valor_input($a->preco_medio, 6),
         'cotacao' => valor_input($a->cotacao, 6), 'nota' => valor_input($a->nota, 1), 'criterios' => $a->criterios ?? [],
+        'atualizacao_automatica' => $a->atualizacao_automatica,
     ];
     $inicial = $errors->hasAny(['ticker', 'classe', 'quantidade', 'preco_medio', 'cotacao', 'nota'])
         ? array_merge($vazio, old(), ['id' => old('_id') ?: null])
@@ -34,6 +36,8 @@
             </div>
             <button type="button" class="btn primary" x-on:click="novo()"><x-icone nome="plus" />Adicionar ativo</button>
         </div>
+
+        <x-cotacoes-status />
 
         <div class="grid g-side">
             <form class="card" method="POST" action="{{ route('metas.update') }}"
@@ -109,7 +113,14 @@
                                             <td><span class="ticker">{{ $a->ticker }}</span></td>
                                             <td class="n">{{ numero($a->quantidade, 6) }}</td>
                                             <td class="n">{{ brl($a->preco_medio) }}</td>
-                                            <td class="n">{{ brl($a->cotacao) }}</td>
+                                            <td class="n">
+                                                {{ brl($a->cotacao) }}
+                                                @if ($a->atualizacao_automatica && $a->temFonteAutomatica() && $a->variacao_dia !== null)
+                                                    <span class="var-dia {{ $a->variacao_dia >= 0 ? 'up' : 'down' }}" title="Variação do dia{{ $a->cotacao_atualizada_em ? ' · atualizada '.$a->cotacao_atualizada_em->diffForHumans() : '' }}">{{ $a->variacao_dia >= 0 ? '▲' : '▼' }} {{ pct(abs($a->variacao_dia), 2) }}</span>
+                                                @elseif (! $a->atualizacao_automatica || ! $a->temFonteAutomatica())
+                                                    <span class="var-dia faint" title="Cotação digitada por você">manual</span>
+                                                @endif
+                                            </td>
                                             <td class="n"><strong>{{ brl($a->valor()) }}</strong></td>
                                             <td class="n">{{ pct($resumo['total'] > 0 ? $a->valor() / $resumo['total'] * 100 : 0) }}</td>
                                             <td class="n {{ $r >= 0 ? 'up' : 'down' }}">{{ $r >= 0 ? '+' : '' }}{{ pct($r) }}</td>
@@ -159,6 +170,10 @@
                     <x-campo nome="preco_medio" rotulo="Preço médio" id="aPm" pre="R$" x-model="ativo.preco_medio" />
                     <x-campo nome="cotacao" rotulo="Cotação atual" id="aCot" pre="R$" x-model="ativo.cotacao" dica="Para renda fixa, o saldo atual" />
                     <x-campo nome="nota" rotulo="Nota (0 a 10)" id="aNota" x-model="ativo.nota" dica="0 = não aportar" />
+                    <div class="field full" x-show="@js($comApi).includes(ativo.classe)">
+                        <label class="check"><input type="checkbox" name="atualizacao_automatica" value="1" x-model="ativo.atualizacao_automatica">Atualizar a cotação automaticamente pela internet</label>
+                        <span class="hint" x-text="ativo.classe === 'cripto' ? 'Use o símbolo da moeda: BTC, ETH, SOL…' : 'Use o código da B3: ITSA4, HGLG11, IVVB11…'"></span>
+                    </div>
                 </div>
                 <div class="row" style="justify-content:flex-end">
                     <button type="button" class="btn" x-on:click="$dispatch('close-modal', 'ativo')">Cancelar</button>

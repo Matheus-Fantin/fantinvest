@@ -7,6 +7,9 @@
         </div>
     </div>
 
+
+    <x-cotacoes-status />
+
     @if ($quantidadeAtivos === 0 && $mesAtual['receitas'] == 0)
         <div class="banner">
             <span><strong>Comece por aqui.</strong> Cadastre seus ativos na Carteira e lance as receitas e gastos do mês no Orçamento.</span>
@@ -131,5 +134,33 @@
                 </form>
             </div>
         </div>
+    </div>
+
+    <div class="card">
+        <div class="card-head">
+            <div><h2>Objetivos</h2><p>Quanto falta e quanto guardar por mês.</p></div>
+            <a class="btn sm ghost" href="{{ route('objetivos.index') }}">Ver objetivos</a>
+        </div>
+        @if ($objetivos->isEmpty())
+            <div class="empty"><p>Crie objetivos como viagem, carro ou troca do celular para acompanhar aqui.</p><a class="btn sm primary" href="{{ route('objetivos.index') }}"><x-icone nome="plus" />Criar objetivo</a></div>
+        @else
+            <div class="grid g2">
+                @foreach ($objetivos as $g)
+                    @php $mensal = $g->aporteMensalNecessario(); @endphp
+                    <div class="stack" style="gap:6px">
+                        <div class="row between small">
+                            <strong>{{ $g->nome }}</strong>
+                            <span class="num">{{ brl($g->valor_atual, 0) }} <span class="faint">/ {{ brl($g->valor_alvo, 0) }}</span></span>
+                        </div>
+                        <div class="meter"><div style="width:{{ $g->percentual() }}%"></div></div>
+                        <span class="small muted">
+                            @if ($g->concluido()) Concluído
+                            @elseif ($mensal !== null) Guardar {{ brl($mensal, 0) }}/mês até {{ $g->data_alvo->translatedFormat('M/Y') }}
+                            @else Sem data definida @endif
+                        </span>
+                    </div>
+                @endforeach
+            </div>
+        @endif
     </div>
 </x-app-layout>

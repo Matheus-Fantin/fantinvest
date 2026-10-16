@@ -62,6 +62,11 @@ class User extends Authenticatable
         return $this->hasMany(AllocationTarget::class);
     }
 
+    public function goals(): HasMany
+    {
+        return $this->hasMany(Goal::class);
+    }
+
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);

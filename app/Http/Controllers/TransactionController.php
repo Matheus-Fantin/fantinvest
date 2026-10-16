@@ -41,6 +41,16 @@ class TransactionController extends Controller
             ->with('sucesso', 'Lançamento adicionado.');
     }
 
+    public function update(StoreTransactionRequest $request, Transaction $transaction): RedirectResponse
+    {
+        Gate::authorize('update', $transaction);
+
+        $transaction->update($request->validated());
+
+        return redirect()->route('orcamento.index', ['mes' => $transaction->data->format('Y-m')])
+            ->with('sucesso', 'Lançamento atualizado.');
+    }
+
     public function destroy(Transaction $transaction): RedirectResponse
     {
         Gate::authorize('delete', $transaction);

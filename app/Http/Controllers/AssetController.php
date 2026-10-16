@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreAssetRequest;
 use App\Models\Asset;
 use App\Services\CarteiraService;
+use App\Services\Cotacoes\CotacaoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -37,25 +38,39 @@ class AssetController extends Controller
         ]);
     }
 
-    public function store(StoreAssetRequest $request): RedirectResponse
+    public function store(StoreAssetRequest $request, CotacaoService $cotacoes): RedirectResponse
     {
         $dados = $request->validated();
-        $dados['cotacao'] = $dados['cotacao'] ?: $dados['preco_medio'];
+        $dados['cotacao'] = ($dados['cotacao'] ?? 0) ?: $dados['preco_medio'];
 
-        $request->user()->assets()->create($dados);
+        $ativo = $request->user()->assets()->create($dados);
 
-        return back()->with('sucesso', "{$dados['ticker']} adicionado à carteira.");
+        return back()->with('sucesso', "{$ativo->ticker} adicionado à carteira.".$this->buscarCotacao($ativo, $cotacoes));
     }
 
-    public function update(StoreAssetRequest $request, Asset $asset): RedirectResponse
+    public function update(StoreAssetRequest $request, Asset $asset, CotacaoService $cotacoes): RedirectResponse
     {
         Gate::authorize('update', $asset);
 
         $dados = $request->validated();
-        $dados['cotacao'] = $dados['cotacao'] ?: $dados['preco_medio'];
+        $dados['cotacao'] = ($dados['cotacao'] ?? 0) ?: $dados['preco_medio'];
         $asset->update($dados);
 
-        return back()->with('sucesso', "{$asset->ticker} atualizado.");
+        return back()->with('sucesso', "{$asset->ticker} atualizado.".$this->buscarCotacao($asset, $cotacoes));
+    }
+
+    /** Busca a cotação na hora para ativos com atualização automática; devolve um complemento para a mensagem. */
+    private function buscarCotacao(Asset $ativo, CotacaoService $cotacoes): string
+    {
+        if (! $ativo->atualizacao_automatica || ! $ativo->temFonteAutomatica()) {
+            return '';
+        }
+
+        $resultado = $cotacoes->atualizar(collect([$ativo]));
+
+        return $resultado['atualizados'] > 0
+            ? ' Cotação atual: '.brl($ativo->fresh()->cotacao).'.'
+            : ' Não encontrei a cotação de '.$ativo->ticker.' na API; ficou a cotação digitada.';
     }
 
     public function destroy(Asset $asset): RedirectResponse

@@ -7,6 +7,9 @@
         </div>
     </div>
 
+
+    <x-cotacoes-status />
+
     @if (abs($somaMetas - 100) > 0.01)
         <div class="banner warn">
             <span>As metas por classe somam {{ pct($somaMetas, 0) }}. Ajuste para 100% na Carteira para uma sugestão precisa.</span>

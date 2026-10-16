@@ -37,6 +37,7 @@ class DashboardController extends Controller
             'classes' => $classes,
             'faltam' => $classes->where('meta', '>', 0)->sortByDesc(fn ($c) => $c['meta'] - $c['atual'])->values(),
             'historico' => $orcamento->historico($user, $mes),
+            'objetivos' => $user->goals()->orderByRaw('data_alvo is null')->orderBy('data_alvo')->limit(4)->get(),
             'reserva' => [
                 'atual' => $user->reserva_atual,
                 'meses' => $user->reserva_meses,

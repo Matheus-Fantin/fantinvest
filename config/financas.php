@@ -35,6 +35,7 @@ return [
         'Outros gastos' => 'des',
         'Investimentos' => 'inv',
         'Reserva de emergência' => 'inv',
+        'Objetivos' => 'inv',
     ],
 
     'grupos' => [
@@ -83,5 +84,26 @@ return [
             'Receita diversificada por região',
             'Setor com demanda duradoura',
         ],
+    ],
+
+    /*
+    | Palavras usadas para sugerir a categoria de cada linha ao importar um extrato.
+    | A primeira categoria cuja palavra aparece na descrição é escolhida.
+    */
+    'palavras_categoria' => [
+        'Salário' => ['salario', 'salário', 'folha', 'pagamento de salario'],
+        'Dividendos' => ['dividendo', 'rendimento', 'jcp', 'juros sobre capital', 'provento'],
+        'Mercado' => ['supermerc', 'mercado', 'carrefour', 'assai', 'atacad', 'pao de acucar', 'hortifruti', 'padaria'],
+        'Restaurantes' => ['ifood', 'restaurante', 'lanchonete', 'burger', 'pizza', 'bar ', 'rappi', 'mcdonald'],
+        'Transporte' => ['uber', '99app', '99 ', 'posto', 'combustivel', 'shell', 'ipiranga', 'estacionamento', 'pedagio', 'sem parar'],
+        'Assinaturas' => ['netflix', 'spotify', 'prime video', 'amazon prime', 'disney', 'hbo', 'max ', 'youtube', 'apple.com', 'google'],
+        'Saúde' => ['farmacia', 'drogaria', 'drogasil', 'raia', 'pague menos', 'hospital', 'clinica', 'laboratorio', 'unimed', 'plano de saude'],
+        'Contas da casa' => ['enel', 'cemig', 'copel', 'light', 'sabesp', 'sanepar', 'agua', 'energia', 'vivo', 'claro', 'tim ', 'oi ', 'internet', 'gas '],
+        'Moradia' => ['aluguel', 'condominio', 'iptu', 'imobiliaria'],
+        'Educação' => ['escola', 'faculdade', 'curso', 'udemy', 'alura', 'livraria'],
+        'Compras' => ['amazon', 'mercado livre', 'mercadolivre', 'shopee', 'magalu', 'americanas', 'renner', 'shein'],
+        'Lazer' => ['cinema', 'ingresso', 'show', 'teatro', 'steam', 'playstation'],
+        'Viagem' => ['hotel', 'airbnb', 'booking', 'latam', 'gol ', 'azul ', 'decolar'],
+        'Investimentos' => ['corretora', 'tesouro', 'aplicacao', 'aplicação', 'xp invest', 'nuinvest', 'rico ', 'clear '],
     ],
 ];

@@ -3,7 +3,8 @@
         ['rota' => 'dashboard', 'nome' => 'Visão geral', 'icone' => 'home'],
         ['rota' => 'carteira.index', 'nome' => 'Carteira', 'icone' => 'wallet'],
         ['rota' => 'aporte.index', 'nome' => 'Regra de aporte', 'icone' => 'target'],
-        ['rota' => 'orcamento.index', 'nome' => 'Orçamento', 'icone' => 'receipt'],
+        ['rota' => 'orcamento.index', 'nome' => 'Orçamento', 'icone' => 'receipt', 'ativa' => 'orcamento.*'],
+        ['rota' => 'objetivos.index', 'nome' => 'Objetivos', 'icone' => 'flag'],
         ['rota' => 'simuladores.juros', 'nome' => 'Juros compostos', 'icone' => 'growth'],
         ['rota' => 'simuladores.financiamento', 'nome' => 'Financiamento', 'icone' => 'house'],
     ];
@@ -22,7 +23,7 @@
         </a>
         <nav class="nav" aria-label="Módulos">
             @foreach ($menu as $item)
-                <a href="{{ route($item['rota']) }}" @if (request()->routeIs($item['rota'])) aria-current="page" @endif>
+                <a href="{{ route($item['rota']) }}" @if (request()->routeIs($item['ativa'] ?? $item['rota'])) aria-current="page" @endif>
                     <x-icone :nome="$item['icone']" /><span>{{ $item['nome'] }}</span>
                 </a>
             @endforeach
@@ -37,7 +38,7 @@
                     <button type="submit"><x-icone nome="logout" />Sair</button>
                 </form>
             </div>
-            <span>Valores em reais. Cotações são digitadas por você.</span>
+            <span>Valores em reais. Cotações da B3 via brapi.dev e de cripto via CoinGecko.</span>
         </div>
     </aside>
 

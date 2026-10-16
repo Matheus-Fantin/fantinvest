@@ -88,4 +88,20 @@ class CarteiraTest extends TestCase
         $this->assertEquals(35, $ativo->preco_medio);
         $this->assertDatabaseHas('transactions', ['user_id' => $user->id, 'categoria' => 'Investimentos', 'valor' => 400]);
     }
+
+    public function test_aporte_em_cripto_aumenta_a_quantidade(): void
+    {
+        $user = User::factory()->create();
+        foreach (['acoes' => 0, 'fii' => 0, 'exterior' => 0, 'rf' => 0, 'cripto' => 100] as $classe => $p) {
+            $user->allocationTargets()->create(['classe' => $classe, 'percentual' => $p]);
+        }
+        $btc = $user->assets()->create(['ticker' => 'BTC', 'classe' => 'cripto', 'quantidade' => 0.01, 'preco_medio' => 400000, 'cotacao' => 500000, 'nota' => 7, 'atualizacao_automatica' => false]);
+
+        $this->actingAs($user)->post('/aporte', ['valor' => '1000'])->assertRedirect();
+
+        $btc->refresh();
+        $this->assertEqualsWithDelta(0.012, $btc->quantidade, 1e-9);
+        $this->assertEqualsWithDelta(5000 / 0.012, $btc->preco_medio, 0.01);
+        $this->assertEquals(500000, $btc->cotacao);
+    }
 }

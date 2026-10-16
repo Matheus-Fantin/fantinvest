@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
         $user->assets()->delete();
         $user->transactions()->delete();
         $user->allocationTargets()->delete();
+        $user->goals()->delete();
 
         foreach (config('financas.metas_padrao') as $classe => $percentual) {
             $user->allocationTargets()->create(['classe' => $classe, 'percentual' => $percentual]);
@@ -42,6 +43,12 @@ class DatabaseSeeder extends Seeder
         foreach ($ativos as [$ticker, $classe, $qtd, $pm, $cotacao, $nota]) {
             $user->assets()->create(['ticker' => $ticker, 'classe' => $classe, 'quantidade' => $qtd, 'preco_medio' => $pm, 'cotacao' => $cotacao, 'nota' => $nota]);
         }
+
+        $user->goals()->createMany([
+            ['nome' => 'Viagem para o Chile', 'valor_alvo' => 12000, 'valor_atual' => 3500, 'data_alvo' => now()->addMonths(14)->endOfMonth()->toDateString(), 'rendimento_anual' => 10],
+            ['nome' => 'Troca do carro', 'valor_alvo' => 45000, 'valor_atual' => 9000, 'data_alvo' => now()->addYears(3)->endOfMonth()->toDateString(), 'rendimento_anual' => 10],
+            ['nome' => 'Notebook novo', 'valor_alvo' => 6000, 'valor_atual' => 6000, 'data_alvo' => null, 'rendimento_anual' => 0],
+        ]);
 
         for ($k = 5; $k >= 0; $k--) {
             $mes = Carbon::now()->startOfMonth()->subMonths($k);
