@@ -35,10 +35,10 @@
 
         <div class="stack">
             <div class="grid g4">
-                <div class="card kpi"><span class="label">Valor final (bruto)</span><span class="value" x-text="fmt.brl0(r.saldo)"></span><span class="sub" x-text="'em ' + fmt.numf(o.anos, 1) + ' anos'"></span></div>
-                <div class="card kpi"><span class="label">Poder de compra hoje</span><span class="value" style="color:var(--accent)" x-text="fmt.brl0(r.realLiq)"></span><span class="sub">líquido de IR e inflação</span></div>
-                <div class="card kpi"><span class="label">Total investido</span><span class="value" x-text="fmt.brl0(r.inv)"></span><span class="sub">do seu bolso</span></div>
-                <div class="card kpi"><span class="label">Juros ganhos</span><span class="value up" x-text="fmt.brl0(r.ganho)"></span><span class="sub" x-text="r.inv ? fmt.numf(r.saldo / r.inv, 2) + '× o que você investiu' : ''"></span></div>
+                <div class="card kpi"><span class="label">Valor final (bruto)</span><span class="value" x-text="fmt.brl(r.saldo)"></span><span class="sub" x-text="'em ' + fmt.numf(o.anos, 1) + ' anos'"></span></div>
+                <div class="card kpi"><span class="label">Poder de compra hoje</span><span class="value" style="color:var(--accent)" x-text="fmt.brl(r.realLiq)"></span><span class="sub">líquido de IR e inflação</span></div>
+                <div class="card kpi"><span class="label">Total investido</span><span class="value" x-text="fmt.brl(r.inv)"></span><span class="sub">do seu bolso</span></div>
+                <div class="card kpi"><span class="label">Juros ganhos</span><span class="value up" x-text="fmt.brl(r.ganho)"></span><span class="sub" x-text="r.inv ? fmt.numf(r.saldo / r.inv, 2) + '× o que você investiu' : ''"></span></div>
             </div>
 
             <div class="card">
@@ -50,14 +50,14 @@
             <div class="grid g2">
                 <div class="card stack">
                     <h2>Renda passiva no final</h2>
-                    <div class="row between"><span class="muted small">Vivendo só do ganho real</span><strong class="num" x-text="fmt.brl0(r.renda) + '/mês'"></strong></div>
-                    <div class="row between"><span class="muted small">Regra dos 4% ao ano</span><strong class="num" x-text="fmt.brl0(r.renda4) + '/mês'"></strong></div>
+                    <div class="row between"><span class="muted small">Vivendo só do ganho real</span><strong class="num" x-text="fmt.brl(r.renda) + '/mês'"></strong></div>
+                    <div class="row between"><span class="muted small">Regra dos 4% ao ano</span><strong class="num" x-text="fmt.brl(r.renda4) + '/mês'"></strong></div>
                     <p class="note">Valores em reais de hoje, sem consumir o patrimônio.</p>
                 </div>
                 <div class="card stack">
                     <h2>Quanto aportar para chegar lá</h2>
                     <x-campo nome="j_meta" rotulo="Quero ter (em reais de hoje)" pre="R$" x-model="campos.meta" />
-                    <div class="row between"><span class="muted small">Aporte mensal necessário</span><strong class="num" style="color:var(--accent)" x-text="r.apMeta <= 0 ? 'Seu valor inicial já basta' : fmt.brl0(r.apMeta) + '/mês'"></strong></div>
+                    <div class="row between"><span class="muted small">Aporte mensal necessário</span><strong class="num" style="color:var(--accent)" x-text="r.apMeta <= 0 ? 'Seu valor inicial já basta' : fmt.brl(r.apMeta) + '/mês'"></strong></div>
                     <p class="note">Aporte fixo em reais de hoje (corrija pela inflação todo ano), sem imposto.</p>
                 </div>
             </div>
@@ -72,10 +72,10 @@
                                 <template x-for="x in r.rows" :key="x.ano">
                                     <tr>
                                         <td x-text="fmt.numf(x.ano, 1)"></td>
-                                        <td class="n" x-text="fmt.brl0(x.inv)"></td>
-                                        <td class="n up" x-text="fmt.brl0(x.saldo - x.inv)"></td>
-                                        <td class="n"><strong x-text="fmt.brl0(x.saldo)"></strong></td>
-                                        <td class="n" x-text="fmt.brl0(x.real)"></td>
+                                        <td class="n" x-text="fmt.brl(x.inv)"></td>
+                                        <td class="n up" x-text="fmt.brl(x.saldo - x.inv)"></td>
+                                        <td class="n"><strong x-text="fmt.brl(x.saldo)"></strong></td>
+                                        <td class="n" x-text="fmt.brl(x.real)"></td>
                                     </tr>
                                 </template>
                             </tbody>

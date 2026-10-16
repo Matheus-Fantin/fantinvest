@@ -8,10 +8,16 @@ Feito com a mesma base do Juari Eventos: **Laravel 12**, **Breeze** (login), **B
 
 | Módulo | O que faz |
 |---|---|
-| Visão geral | Patrimônio, resultado da carteira, sobra e taxa de poupança do mês, alocação atual × meta, receitas × gastos dos últimos 6 meses e reserva de emergência. |
+| Visão geral | Patrimônio, resultado da carteira, sobra e taxa de poupança do mês, contas e faturas, compromissos futuros, alocação atual × meta, receitas × gastos dos últimos 6 meses e reserva de emergência. |
+| Patrimônio | Tudo o que você tem (contas, investimentos, imóvel) menos o que deve (faturas, parcelas, financiamento), renda passiva e evolução mês a mês. |
+| Contas | Conta corrente, poupança, corretora e cripto com saldo calculado, transferências entre contas. |
+| Cartões | Limite, dia de fechamento e vencimento, faturas (aberta, fechada, atrasada, paga, futura) e pagamento de fatura que não conta o gasto duas vezes. |
 | Carteira | Ativos com quantidade, preço médio, cotação e nota (0 a 10). Cotação e variação do dia atualizadas pela internet (B3 e cripto). A nota pode vir de um checklist de 10 critérios por classe. Metas de alocação por classe. |
+| Bolsa | Pesquisa de ações, FIIs, ETFs e BDRs (brapi), página da ação com gráfico de 3 meses, compras e vendas com preço médio e lucro realizado. |
+| Dividendos | Proventos por ativo e por mês, yield on cost; cada provento vira receita no orçamento. |
+| Meu financiamento | Contrato da Caixa (SAC ou Price): cronograma, parcelas pagas, saldo devedor, juros, amortizações extras, liberações do banco e gastos da obra. |
 | Regra de aporte | Diz quantas cotas comprar de cada ativo: primeiro as classes mais abaixo da meta, depois os ativos com maior nota e mais abaixo do peso. Registra a compra (quantidade e preço médio) e lança o aporte no orçamento. |
-| Orçamento | Receitas e gastos por mês e categoria, edição de lançamentos, regra 50/30/20, gráfico por categoria e importação de extrato/fatura em CSV com sugestão de categoria. |
+| Orçamento | Receitas e gastos por mês, em conta ou cartão, compras parceladas (3/10), gráfico do que já está comprometido nos próximos meses, regra 50/30/20 e importação de extrato OFX ou CSV. |
 | Objetivos | Metas como viagem, carro ou casa: quanto falta, quanto guardar por mês (contando o rendimento) e depósitos que podem ir direto para o orçamento. |
 | Juros compostos | Valor final bruto e em poder de compra de hoje (descontando inflação e IR), reajuste anual do aporte, renda passiva e "quanto aportar para chegar lá". |
 | Financiamento | Price × SAC, total de juros, CET aproximado, veredito (bom / atenção / ruim) e comparação "financiar × investir e comprar à vista". |
@@ -49,7 +55,15 @@ composer run dev          # sobe o servidor, a fila, os logs, o Vite e o agendad
 
 Abra http://localhost:8000.
 
-Conta de demonstração (depois do `db:seed`): **demo@fantinvest.test** / senha **password**. Para usar com seus dados, crie sua conta em "Criar conta".
+Conta de demonstração (depois do `db:seed`): **demo@fantinvest.test** / senha **password**.
+
+## Cadastro por convite
+
+A primeira conta criada vira administradora. Depois disso, novas contas só entram por convite: em **Administração → Convites** você gera um link (opcionalmente preso a um e-mail) que vale uma vez. Para liberar o cadastro para qualquer pessoa, use `CADASTRO_ABERTO=true` no `.env`. Para dar acesso de administrador a uma conta existente:
+
+```bash
+php artisan usuario:admin seu@email.com
+```
 
 ## Estrutura
 

@@ -70,4 +70,12 @@ class OrcamentoTest extends TestCase
             ->put("/orcamento/{$lancamento->id}", ['tipo' => 'despesa', 'data' => '2026-10-05', 'categoria' => 'Mercado', 'valor' => '1'])
             ->assertForbidden();
     }
+
+    public function test_lancamento_no_ultimo_dia_do_mes_entra_no_mes(): void
+    {
+        $user = User::factory()->create();
+        $user->transactions()->create(['tipo' => 'despesa', 'data' => '2026-10-31', 'categoria' => 'Mercado', 'valor' => 77]);
+
+        $this->assertEquals(77, app(OrcamentoService::class)->resumoDoMes($user, '2026-10')['gastos']);
+    }
 }

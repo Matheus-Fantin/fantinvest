@@ -1,5 +1,5 @@
 import { Chart, aoMudarTema, css, opcoesBase, tooltipValor } from '../graficos';
-import { brl, numf, parseNum } from '../formato';
+import { brl, moeda, numf, parseNum } from '../formato';
 import { finVerdict, simFin } from './calculos';
 
 const PADRAO = { valor: 400000, entrada: 80000, taxa: 11.5, prazo: 360, taxas: 120, renda: 15000, inflacao: 4.5, alt: 11 };
@@ -9,7 +9,8 @@ const EXEMPLOS = {
     moto: { valor: 22000, entrada: 4000, taxa: 2.2, unid: 'am', prazo: 36, taxas: 0 },
 };
 const CHAVE = 'fantinvest.sim.financiamento';
-const texto = (v) => numf(v, 2).replace(/\./g, '');
+const DINHEIRO = ['valor', 'entrada', 'taxas', 'renda'];
+const texto = (v, k) => (DINHEIRO.includes(k) ? moeda(v) : numf(v, 2).replace(/\./g, ''));
 
 export default () => ({
     campos: {},
@@ -26,7 +27,7 @@ export default () => ({
         this.unid = salvo.unid || 'aa';
         this.sistema = salvo.sistema || 'price';
         const o = { ...PADRAO, ...salvo };
-        this.campos = Object.fromEntries(Object.keys(PADRAO).map((k) => [k, texto(o[k])]));
+        this.campos = Object.fromEntries(Object.keys(PADRAO).map((k) => [k, texto(o[k], k)]));
         this.calcular();
         aoMudarTema(() => this.desenhar());
     },
@@ -62,7 +63,7 @@ export default () => ({
 
     exemplo(nome) {
         const e = EXEMPLOS[nome];
-        Object.keys(e).forEach((k) => { if (k !== 'unid') this.campos[k] = texto(e[k]); });
+        Object.keys(e).forEach((k) => { if (k !== 'unid') this.campos[k] = texto(e[k], k); });
         this.unid = e.unid;
         this.calcular();
     },

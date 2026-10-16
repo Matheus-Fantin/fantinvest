@@ -7,6 +7,9 @@ export const brl0 = (v) => fBRL0.format(Number.isFinite(v) ? v : 0);
 export const pct = (v, d = 1) => (Number.isFinite(v) ? v : 0).toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d }) + '%';
 export const numf = (v, d = 2) => (Number.isFinite(v) ? v : 0).toLocaleString('pt-BR', { maximumFractionDigits: d });
 
+/** Valor para campo de formulário: 1.234,56. */
+export const moeda = (v) => (Number.isFinite(v) ? v : 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 /** Rótulo curto para eixos: R$ 3,5 mil, R$ 1,2 mi. */
 export function brlK(v) {
     const a = Math.abs(v);

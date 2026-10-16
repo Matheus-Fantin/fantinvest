@@ -30,10 +30,10 @@ if (! function_exists('numero')) {
 }
 
 if (! function_exists('valor_input')) {
-    /** Valor para preencher um campo de formulário (sem separador de milhar). */
+    /** Valor para preencher um campo de formulário: 1.234,5 (ponto no milhar, sem zeros sobrando). */
     function valor_input(float|int|string|null $valor, int $casas = 2): string
     {
-        $texto = number_format((float) $valor, $casas, ',', '');
+        $texto = number_format((float) $valor, $casas, ',', '.');
 
         return $casas > 0 ? rtrim(rtrim($texto, '0'), ',') : $texto;
     }
@@ -69,5 +69,13 @@ if (! function_exists('ler_numero')) {
         }
 
         return $texto;
+    }
+}
+
+if (! function_exists('moeda_input')) {
+    /** Valor em reais para preencher um campo: 1.234,56 (sempre com centavos). */
+    function moeda_input(float|int|string|null $valor): string
+    {
+        return number_format((float) $valor, 2, ',', '.');
     }
 }

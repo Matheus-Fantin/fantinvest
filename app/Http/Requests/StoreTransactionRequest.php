@@ -2,13 +2,14 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\LeOrigem;
 use App\Http\Requests\Concerns\NormalizaNumeros;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StoreTransactionRequest extends FormRequest
 {
-    use NormalizaNumeros;
+    use LeOrigem, NormalizaNumeros;
 
     public function authorize(): bool
     {
@@ -18,6 +19,7 @@ class StoreTransactionRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->normalizarNumeros(['valor']);
+        $this->lerOrigem();
     }
 
     public function rules(): array
@@ -32,6 +34,8 @@ class StoreTransactionRequest extends FormRequest
             'categoria' => ['required', Rule::in($categorias)],
             'descricao' => ['nullable', 'string', 'max:80'],
             'valor' => ['required', 'numeric', 'gt:0'],
+            'parcelas' => ['nullable', 'integer', 'between:1,120'],
+            ...$this->regrasOrigem(),
         ];
     }
 }

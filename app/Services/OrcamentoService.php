@@ -52,7 +52,7 @@ class OrcamentoService
         $inicio = $fim->copy()->subMonths($meses - 1);
 
         $lancamentos = $user->transactions()
-            ->whereBetween('data', [$inicio->toDateString(), $fim->copy()->endOfMonth()->toDateString()])
+            ->whereBetween('data', [$inicio->toDateString(), $fim->copy()->endOfMonth()->toDateTimeString()])
             ->get()
             ->groupBy(fn (Transaction $t) => $t->data->format('Y-m'));
 

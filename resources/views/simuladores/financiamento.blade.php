@@ -18,7 +18,7 @@
                     <x-campo nome="f_valor" rotulo="Valor do bem" pre="R$" x-model="campos.valor" />
                     <div class="field">
                         <label for="f-entrada">Entrada</label>
-                        <div class="in-group"><span class="affix">R$</span><input class="in" id="f-entrada" inputmode="decimal" x-model="campos.entrada"></div>
+                        <div class="in-group"><span class="affix">R$</span><input class="in" data-moeda id="f-entrada" inputmode="decimal" x-model="campos.entrada"></div>
                         <span class="hint" x-text="o.valor ? fmt.pct(o.entrada / o.valor * 100, 0) + ' do valor' : ''"></span>
                     </div>
                     <div class="field">
@@ -35,7 +35,7 @@
                     </div>
                     <div class="field">
                         <label for="f-taxas">Seguros e tarifas</label>
-                        <div class="in-group"><span class="affix">R$</span><input class="in" id="f-taxas" inputmode="decimal" x-model="campos.taxas"><span class="affix">/mês</span></div>
+                        <div class="in-group"><span class="affix">R$</span><input class="in" data-moeda id="f-taxas" inputmode="decimal" x-model="campos.taxas"><span class="affix">/mês</span></div>
                     </div>
                     <x-campo nome="f_renda" rotulo="Sua renda mensal" pre="R$" x-model="campos.renda" />
                     <x-campo nome="f_inflacao" rotulo="Inflação esperada" suf="% a.a." x-model="campos.inflacao" />
@@ -71,14 +71,14 @@
                 </div>
 
                 <div class="grid g4">
-                    <div class="card kpi"><span class="label" x-text="sistema === 'price' ? 'Parcela' : '1ª parcela'"></span><span class="value" x-text="fmt.brl0(r.sel.first)"></span><span class="sub" x-text="sistema === 'sac' ? 'última ' + fmt.brl0(r.sel.last) : 'fixa por ' + r.n + ' meses'"></span></div>
-                    <div class="card kpi"><span class="label">Total pago</span><span class="value" x-text="fmt.brl0(r.sel.total + o.entrada)"></span><span class="sub" x-text="o.valor ? fmt.numf((r.sel.total + o.entrada) / o.valor, 2) + '× o valor do bem' : ''"></span></div>
-                    <div class="card kpi"><span class="label">Só de juros</span><span class="value down" x-text="fmt.brl0(r.sel.juros)"></span><span class="sub" x-text="'taxa ' + fmt.pct(r.iA, 2) + ' a.a. · ' + fmt.pct(r.i * 100, 2) + ' a.m.'"></span></div>
+                    <div class="card kpi"><span class="label" x-text="sistema === 'price' ? 'Parcela' : '1ª parcela'"></span><span class="value" x-text="fmt.brl(r.sel.first)"></span><span class="sub" x-text="sistema === 'sac' ? 'última ' + fmt.brl(r.sel.last) : 'fixa por ' + r.n + ' meses'"></span></div>
+                    <div class="card kpi"><span class="label">Total pago</span><span class="value" x-text="fmt.brl(r.sel.total + o.entrada)"></span><span class="sub" x-text="o.valor ? fmt.numf((r.sel.total + o.entrada) / o.valor, 2) + '× o valor do bem' : ''"></span></div>
+                    <div class="card kpi"><span class="label">Só de juros</span><span class="value down" x-text="fmt.brl(r.sel.juros)"></span><span class="sub" x-text="'taxa ' + fmt.pct(r.iA, 2) + ' a.a. · ' + fmt.pct(r.i * 100, 2) + ' a.m.'"></span></div>
                     <div class="card kpi"><span class="label">CET aproximado</span><span class="value" x-text="fmt.pct(r.cetA, 2)"></span><span class="sub">a.a., com seguros e tarifas</span></div>
                 </div>
 
                 <div class="card">
-                    <div class="card-head"><div><h2>Price × SAC</h2><p x-text="'Valor da parcela ao longo do tempo. Price: total ' + fmt.brl0(r.price.total) + ' · SAC: total ' + fmt.brl0(r.sac.total) + ' · diferença ' + fmt.brl0(Math.abs(r.price.total - r.sac.total)) + '.'"></p></div></div>
+                    <div class="card-head"><div><h2>Price × SAC</h2><p x-text="'Valor da parcela ao longo do tempo. Price: total ' + fmt.brl(r.price.total) + ' · SAC: total ' + fmt.brl(r.sac.total) + ' · diferença ' + fmt.brl(Math.abs(r.price.total - r.sac.total)) + '.'"></p></div></div>
                     <x-legenda :itens="[['s1', 'Price'], ['s2', 'SAC']]" />
                     <div class="chart-box"><canvas x-ref="parcelas" role="img" aria-label="Parcela mensal nos sistemas Price e SAC"></canvas></div>
                 </div>
@@ -97,11 +97,11 @@
                     <x-legenda :itens="[['s1', 'Dinheiro investido'], ['s2', 'Preço do bem (corrigido)']]" />
                     <div class="chart-box"><canvas x-ref="alternativa" role="img" aria-label="Saldo investido comparado ao preço do bem corrigido"></canvas></div>
                     <div class="grid g3" style="margin-top:14px">
-                        <div class="kpi"><span class="label">Financiando</span><span class="value" style="font-size:1.2rem" x-text="fmt.brl0(r.sel.total + o.entrada)"></span><span class="sub" x-text="'em ' + fmt.prazo(r.n)"></span></div>
-                        <div class="kpi"><span class="label">Investindo antes</span><span class="value" style="font-size:1.2rem" x-text="r.gastoAlt ? fmt.brl0(r.gastoAlt) : '—'"></span><span class="sub" x-text="r.mes ? 'em ' + fmt.prazo(r.mes) : 'não alcança em 50 anos'"></span></div>
-                        <div class="kpi"><span class="label">Diferença</span><span class="value" style="font-size:1.2rem" :class="r.economia > 0 ? 'up' : 'down'" x-text="r.economia !== null ? fmt.brl0(r.economia) : '—'"></span><span class="sub" x-text="r.economia > 0 ? 'a mais para quem financia' : ''"></span></div>
+                        <div class="kpi"><span class="label">Financiando</span><span class="value" style="font-size:1.2rem" x-text="fmt.brl(r.sel.total + o.entrada)"></span><span class="sub" x-text="'em ' + fmt.prazo(r.n)"></span></div>
+                        <div class="kpi"><span class="label">Investindo antes</span><span class="value" style="font-size:1.2rem" x-text="r.gastoAlt ? fmt.brl(r.gastoAlt) : '—'"></span><span class="sub" x-text="r.mes ? 'em ' + fmt.prazo(r.mes) : 'não alcança em 50 anos'"></span></div>
+                        <div class="kpi"><span class="label">Diferença</span><span class="value" style="font-size:1.2rem" :class="r.economia > 0 ? 'up' : 'down'" x-text="r.economia !== null ? fmt.brl(r.economia) : '—'"></span><span class="sub" x-text="r.economia > 0 ? 'a mais para quem financia' : ''"></span></div>
                     </div>
-                    <p class="note" style="margin-top:10px" x-text="'Custo real das parcelas em reais de hoje: ' + fmt.brl0(r.vpReal) + ' (descontando inflação de ' + fmt.pct(o.inflacao) + ' a.a.). A simulação não considera aluguel ou uso do bem enquanto junta.'"></p>
+                    <p class="note" style="margin-top:10px" x-text="'Custo real das parcelas em reais de hoje: ' + fmt.brl(r.vpReal) + ' (descontando inflação de ' + fmt.pct(o.inflacao) + ' a.a.). A simulação não considera aluguel ou uso do bem enquanto junta.'"></p>
                 </div>
 
                 <div class="card">
@@ -114,10 +114,10 @@
                                     <template x-for="a in anos" :key="a.ano">
                                         <tr>
                                             <td x-text="a.ano"></td>
-                                            <td class="n" x-text="fmt.brl0(a.pago)"></td>
-                                            <td class="n down" x-text="fmt.brl0(a.juros)"></td>
-                                            <td class="n" x-text="fmt.brl0(a.amort)"></td>
-                                            <td class="n"><strong x-text="fmt.brl0(a.saldo)"></strong></td>
+                                            <td class="n" x-text="fmt.brl(a.pago)"></td>
+                                            <td class="n down" x-text="fmt.brl(a.juros)"></td>
+                                            <td class="n" x-text="fmt.brl(a.amort)"></td>
+                                            <td class="n"><strong x-text="fmt.brl(a.saldo)"></strong></td>
                                         </tr>
                                     </template>
                                 </tbody>

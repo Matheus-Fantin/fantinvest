@@ -1,5 +1,5 @@
 import { Chart, aoMudarTema, css, opcoesBase, tooltipValor } from '../graficos';
-import { brl0, numf, parseNum } from '../formato';
+import { brl, moeda, numf, parseNum } from '../formato';
 import { simJuros } from './calculos';
 
 const PADRAO = { inicial: 10000, aporte: 1500, taxa: 11, inflacao: 4.5, anos: 20, reajuste: 4.5, ir: 15, meta: 1000000 };
@@ -14,7 +14,8 @@ export default () => ({
         let salvo = {};
         try { salvo = JSON.parse(localStorage.getItem(CHAVE) || '{}'); } catch {}
         const o = { ...PADRAO, ...salvo };
-        this.campos = Object.fromEntries(Object.entries(o).map(([k, v]) => [k, numf(v, 2).replace(/\./g, '')]));
+        const dinheiro = ['inicial', 'aporte', 'meta'];
+        this.campos = Object.fromEntries(Object.entries(o).map(([k, v]) => [k, dinheiro.includes(k) ? moeda(v) : numf(v, 2).replace(/\./g, '')]));
         this.calcular();
         aoMudarTema(() => this.desenhar());
     },
@@ -50,6 +51,6 @@ export default () => ({
             ],
         };
         this.grafico?.destroy();
-        this.grafico = new Chart(this.$refs.grafico, { type: 'line', data: dados, options: opcoesBase(tooltipValor(brl0)) });
+        this.grafico = new Chart(this.$refs.grafico, { type: 'line', data: dados, options: opcoesBase(tooltipValor(brl)) });
     },
 });

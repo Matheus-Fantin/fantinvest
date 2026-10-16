@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreTransactionRequest;
 use App\Models\Transaction;
+use App\Services\LancamentoService;
 use App\Services\OrcamentoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,47 +14,62 @@ use Illuminate\View\View;
 
 class TransactionController extends Controller
 {
-    public function index(Request $request, OrcamentoService $orcamento): View
+    public function index(Request $request, OrcamentoService $orcamento, LancamentoService $lancamentos): View
     {
         $mes = $request->query('mes');
         if (! is_string($mes) || ! preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $mes)) {
             $mes = now()->format('Y-m');
         }
         $base = Carbon::createFromFormat('Y-m-d', $mes.'-01');
+        $user = $request->user();
 
-        $lancamentos = $request->user()->transactions()->doMes($mes)->orderByDesc('data')->orderByDesc('id')->get();
+        $lista = $user->transactions()->with(['account', 'card'])->doMes($mes)->orderByDesc('data')->orderByDesc('id')->get();
 
         return view('orcamento.index', [
             'mes' => $mes,
             'anterior' => $base->copy()->subMonth()->format('Y-m'),
             'proximo' => $base->copy()->addMonth()->format('Y-m'),
-            'lancamentos' => $lancamentos,
-            'resumo' => $orcamento->resumo($lancamentos),
+            'lancamentos' => $lista,
+            'resumo' => $orcamento->resumo($lista),
             'tipo' => $request->query('tipo') === 'receita' ? 'receita' : 'despesa',
+            'contas' => $user->accounts()->where('arquivada', false)->orderBy('nome')->get(),
+            'cartoes' => $user->cards()->orderBy('nome')->get(),
+            'compromissos' => $lancamentos->compromissosFuturos($user),
         ]);
     }
 
-    public function store(StoreTransactionRequest $request): RedirectResponse
+    public function store(StoreTransactionRequest $request, LancamentoService $lancamentos): RedirectResponse
     {
-        $lancamento = $request->user()->transactions()->create($request->validated());
+        $criados = $lancamentos->criar($request->user(), $request->validated());
+        $primeiro = $criados->first();
 
-        return redirect()->route('orcamento.index', ['mes' => $lancamento->data->format('Y-m'), 'tipo' => $lancamento->tipo])
-            ->with('sucesso', 'Lançamento adicionado.');
+        $mensagem = $criados->count() > 1
+            ? "Compra lançada em {$criados->count()} parcelas de ".brl($criados->last()->valor).'.'
+            : 'Lançamento adicionado.';
+
+        return redirect()->route('orcamento.index', ['mes' => $primeiro->data->format('Y-m'), 'tipo' => $primeiro->tipo])
+            ->with('sucesso', $mensagem);
     }
 
-    public function update(StoreTransactionRequest $request, Transaction $transaction): RedirectResponse
+    public function update(StoreTransactionRequest $request, Transaction $transaction, LancamentoService $lancamentos): RedirectResponse
     {
         Gate::authorize('update', $transaction);
 
-        $transaction->update($request->validated());
+        $lancamentos->atualizar($transaction, $request->validated());
 
         return redirect()->route('orcamento.index', ['mes' => $transaction->data->format('Y-m')])
             ->with('sucesso', 'Lançamento atualizado.');
     }
 
-    public function destroy(Transaction $transaction): RedirectResponse
+    public function destroy(Request $request, Transaction $transaction): RedirectResponse
     {
         Gate::authorize('delete', $transaction);
+
+        if ($request->boolean('todas') && $transaction->parcelamento_id) {
+            $quantidade = $request->user()->transactions()->where('parcelamento_id', $transaction->parcelamento_id)->delete();
+
+            return back()->with('sucesso', "Compra parcelada excluída ($quantidade parcelas).");
+        }
 
         $transaction->delete();
 

@@ -20,10 +20,10 @@
     <div class="grid g-side">
         <div class="card stack">
             <form method="GET" action="{{ route('aporte.index') }}" class="stack">
-                <x-campo nome="valor" rotulo="Valor do aporte" pre="R$" :valor="valor_input($valor)" dica="Quanto você vai investir agora." />
+                <x-campo nome="valor" rotulo="Valor do aporte" pre="R$" :valor="moeda_input($valor)" dica="Quanto você vai investir agora." />
                 <div class="presets">
                     @foreach ([500, 1000, 2000, 3000, 5000] as $v)
-                        <a href="{{ route('aporte.index', ['valor' => $v]) }}">{{ brl($v, 0) }}</a>
+                        <a href="{{ route('aporte.index', ['valor' => $v]) }}">{{ brl($v) }}</a>
                     @endforeach
                 </div>
                 <button class="btn" type="submit">Calcular</button>
@@ -36,7 +36,12 @@
             </div>
             <form method="POST" action="{{ route('aporte.store') }}">
                 @csrf
-                <input type="hidden" name="valor" value="{{ valor_input($valor) }}">
+                <input type="hidden" name="valor" value="{{ moeda_input($valor) }}">
+                @if ($contas->isNotEmpty())
+                    <div class="field" style="margin-bottom:10px"><label for="apConta">Pagar com a conta</label>
+                        <select class="in" id="apConta" name="account_id"><option value="">Nenhuma</option>
+                            @foreach ($contas as $c)<option value="{{ $c->id }}" @selected($c->tipo === 'corretora')>{{ $c->nome }}</option>@endforeach</select></div>
+                @endif
                 <button class="btn primary" type="submit" style="width:100%" @disabled(empty($plano['compras']))><x-icone nome="check" />Registrar compras na carteira</button>
             </form>
             <p class="note">Registrar atualiza a quantidade e o preço médio de cada ativo e lança o aporte no orçamento deste mês.</p>

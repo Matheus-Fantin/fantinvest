@@ -184,7 +184,7 @@ tr.group td { background: var(--surface-2); font-weight: 600; font-size: 13px; c
 
 .tx-type { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; }
 .month-nav { display: flex; align-items: center; gap: 6px; }
-.month-nav strong { min-width: 150px; text-align: center; font-family: var(--f-display); font-weight: 650; text-transform: capitalize; }
+.month-nav strong { min-width: 150px; text-align: center; font-family: var(--f-display); font-weight: 650; }
 
 .modal-back { position: fixed; inset: 0; background: rgba(8,12,10,.45); display: grid; place-items: center; z-index: 50; padding: 16px; backdrop-filter: blur(2px); }
 .modal { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; width: min(560px, 100%); max-height: calc(100vh - 32px); overflow: auto; padding: 22px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 16px; }
@@ -270,3 +270,25 @@ a { color: inherit; text-decoration: none; }
 .import-table tr.off td { opacity: .5; }
 .dropzone { border: 1.5px dashed var(--line); border-radius: 12px; padding: 28px 16px; text-align: center; display: flex; flex-direction: column; gap: 8px; align-items: center; color: var(--muted); }
 .dropzone.over { border-color: var(--accent); background: var(--accent-soft); }
+.nav-grupo { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); padding: 12px 10px 4px; }
+.side { overflow-y: auto; gap: 20px; }
+.nav a { padding: 7px 10px; }
+@media (max-width: 820px) { .nav-grupo { display: none; } .side { overflow: visible; } }
+.badge-parcela { display: inline-block; font-family: var(--f-mono); font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); margin-left: 6px; }
+.origem { font-size: 12px; color: var(--faint); }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.tabs button { border: 0; background: transparent; padding: 10px 14px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.list-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.list-row:last-child { border-bottom: 0; }
+.big-num { font-family: var(--f-display); font-weight: 650; font-size: clamp(1.6rem, 3vw, 2.4rem); letter-spacing: -.02em; line-height: 1.1; white-space: nowrap; }
+.search-box { display: flex; gap: 8px; }
+.search-box .in-group { flex: 1; }
+.ativo-logo { width: 28px; height: 28px; border-radius: 8px; object-fit: cover; background: var(--surface-2); flex: none; }
+tr.pago td { color: var(--muted); }
+tr.atrasada td:first-child { box-shadow: inset 3px 0 0 var(--bad); }
+tr.proxima td { background: var(--accent-soft); }
+.fatura-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+.fatura-tabs a { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; min-width: 110px; font-size: 12.5px; background: var(--surface); }
+.fatura-tabs a[aria-current="page"] { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.fatura-tabs strong { font-size: 13.5px; }

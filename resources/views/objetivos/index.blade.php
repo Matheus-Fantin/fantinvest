@@ -3,7 +3,7 @@
     $campos = ['nome', 'valor_alvo', 'valor_atual', 'data_alvo', 'rendimento_anual'];
     $inicial = $errors->hasAny($campos) ? array_merge($vazio, old(), ['id' => old('_id') ?: null]) : $vazio;
     $paraForm = fn ($g) => [
-        'id' => $g->id, 'nome' => $g->nome, 'valor_alvo' => valor_input($g->valor_alvo), 'valor_atual' => valor_input($g->valor_atual),
+        'id' => $g->id, 'nome' => $g->nome, 'valor_alvo' => moeda_input($g->valor_alvo), 'valor_atual' => moeda_input($g->valor_atual),
         'data_alvo' => $g->data_alvo?->format('Y-m-d') ?? '', 'rendimento_anual' => valor_input($g->rendimento_anual),
     ];
 @endphp
@@ -29,9 +29,9 @@
 
         @if ($objetivos->isNotEmpty())
             <div class="grid g3">
-                <div class="card kpi"><span class="label">Guardado nos objetivos</span><span class="value">{{ brl($totalGuardado, 0) }}</span><span class="sub">de {{ brl($totalAlvo, 0) }} no total</span></div>
+                <div class="card kpi"><span class="label">Guardado nos objetivos</span><span class="value">{{ brl($totalGuardado) }}</span><span class="sub">de {{ brl($totalAlvo) }} no total</span></div>
                 <div class="card kpi"><span class="label">Progresso geral</span><span class="value">{{ pct($totalAlvo > 0 ? min(100, $totalGuardado / $totalAlvo * 100) : 0, 0) }}</span><span class="sub">{{ $objetivos->filter->concluido()->count() }} de {{ $objetivos->count() }} concluídos</span></div>
-                <div class="card kpi"><span class="label">Guardar por mês</span><span class="value" style="color:var(--accent)">{{ brl($totalMensal, 0) }}</span><span class="sub">somando os objetivos com data</span></div>
+                <div class="card kpi"><span class="label">Guardar por mês</span><span class="value" style="color:var(--accent)">{{ brl($totalMensal) }}</span><span class="sub">somando os objetivos com data</span></div>
             </div>
         @endif
 
@@ -65,8 +65,8 @@
                             @endif
                         </div>
                         <div class="row between">
-                            <span class="kpi"><span class="label">Guardado</span><span class="value">{{ brl($g->valor_atual, 0) }}</span></span>
-                            <span class="kpi" style="text-align:right"><span class="label">Meta</span><span class="value">{{ brl($g->valor_alvo, 0) }}</span></span>
+                            <span class="kpi"><span class="label">Guardado</span><span class="value">{{ brl($g->valor_atual) }}</span></span>
+                            <span class="kpi" style="text-align:right"><span class="label">Meta</span><span class="value">{{ brl($g->valor_alvo) }}</span></span>
                         </div>
                         <div class="meter"><div style="width:{{ $g->percentual() }}%"></div></div>
                         <div class="row between small">
@@ -76,7 +76,7 @@
                                 <span class="muted">Guardar por mês</span>
                                 <strong class="num" style="color:var(--accent)">{{ brl($mensal) }} · {{ $g->mesesRestantes() }} {{ $g->mesesRestantes() === 1 ? 'mês' : 'meses' }}</strong>
                             @else
-                                <span class="muted">Faltam {{ brl($g->valor_alvo - $g->valor_atual, 0) }}. Defina uma data para ver quanto guardar por mês.</span>
+                                <span class="muted">Faltam {{ brl($g->valor_alvo - $g->valor_atual) }}. Defina uma data para ver quanto guardar por mês.</span>
                             @endif
                         </div>
                         <div class="row" style="justify-content:space-between">
@@ -136,7 +136,7 @@
                 <input type="hidden" name="valor" x-ref="valorReal">
                 <div class="field">
                     <label for="dValor">Valor</label>
-                    <div class="in-group"><span class="affix">R$</span><input class="in" id="dValor" inputmode="decimal" x-model="deposito.valor" required></div>
+                    <div class="in-group"><span class="affix">R$</span><input class="in" data-moeda id="dValor" inputmode="decimal" x-model="deposito.valor" required></div>
                     @error('valor')<span class="erro">{{ $message }}</span>@enderror
                 </div>
                 <label class="check" x-show="!deposito.retirar"><input type="checkbox" name="lancar_no_orcamento" value="1" checked>Lançar no orçamento deste mês (categoria Objetivos)</label>

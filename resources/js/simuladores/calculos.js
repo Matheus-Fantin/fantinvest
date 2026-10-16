@@ -1,5 +1,5 @@
 // Cálculos dos simuladores (puros, sem DOM). Taxas sempre em % ao ano, exceto quando indicado.
-import { brl0, pct, prazo } from '../formato';
+import { brl, pct, prazo } from '../formato';
 
 export function simJuros(o) {
   const n = Math.max(1, Math.round(o.anos * 12));
@@ -82,8 +82,8 @@ export function finVerdict(o, r) {
     ? ["good", "Custo efetivo", `CET de ${pct(r.cetA)} a.a. está abaixo do que seu dinheiro rende (${pct(o.alt)} a.a.). Financiar pode compensar.`]
     : ["bad", "Custo efetivo", `CET de ${pct(r.cetA)} a.a. é maior que o rendimento de ${pct(o.alt)} a.a. Juntar e comprar à vista sai mais barato.`]);
   items.push(jr < 30 ? ["good", "Peso dos juros", `Você paga ${pct(jr, 0)} do valor financiado em juros.`]
-    : jr < 80 ? ["warn", "Peso dos juros", `Você paga ${pct(jr, 0)} do valor financiado em juros (${brl0(r.sel.juros)}).`]
-    : ["bad", "Peso dos juros", `Os juros somam ${pct(jr, 0)} do valor financiado: ${brl0(r.sel.juros)} só de juros.`]);
+    : jr < 80 ? ["warn", "Peso dos juros", `Você paga ${pct(jr, 0)} do valor financiado em juros (${brl(r.sel.juros)}).`]
+    : ["bad", "Peso dos juros", `Os juros somam ${pct(jr, 0)} do valor financiado: ${brl(r.sel.juros)} só de juros.`]);
   if (o.renda > 0) {
     const c = r.sel.first / o.renda * 100;
     items.push(c <= 30 ? ["good", "Comprometimento da renda", `A 1ª parcela usa ${pct(c, 0)} da renda (limite saudável: 30%).`]

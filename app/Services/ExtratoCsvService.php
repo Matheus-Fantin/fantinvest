@@ -8,8 +8,8 @@ use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 /**
- * Lê extratos e faturas exportados pelos bancos em CSV (Nubank, Inter, Itaú, C6…).
- * Precisa de uma linha de cabeçalho com colunas de data, valor e descrição;
+ * Lê extratos e faturas exportados pelos bancos em CSV (Nubank, Inter, Itaú, C6…) ou OFX.
+ * O CSV precisa de uma linha de cabeçalho com colunas de data, valor e descrição;
  * os nomes mais comuns em português e inglês são reconhecidos.
  */
 class ExtratoCsvService
@@ -23,10 +23,36 @@ class ExtratoCsvService
     ];
 
     /**
-     * @param  bool  $fatura  true para fatura de cartão: valores positivos são gastos e negativos (pagamentos/estornos) vêm desmarcados
-     * @return array<int, array{data: string, descricao: string, valor: float, tipo: string, categoria: string, incluir: bool, aviso: ?string}>
+     * Lê um CSV ou OFX e devolve as linhas para revisão.
+     *
+     * @param  bool  $fatura  true para fatura de cartão: os gastos vêm marcados e pagamentos/estornos desmarcados
+     * @return array<int, array{data: string, descricao: string, valor: float, tipo: string, categoria: string, incluir: bool, aviso: ?string, external_id: ?string}>
      */
     public function ler(string $conteudo, bool $fatura, User $user): array
+    {
+        $existentes = $user->transactions()
+            ->get(['data', 'valor', 'descricao', 'external_id'])
+            ->flatMap(fn ($t) => array_filter([
+                $t->data->format('Y-m-d').'|'.number_format($t->valor, 2, '.', '').'|'.mb_strtolower((string) $t->descricao),
+                $t->external_id ? 'id:'.$t->external_id : null,
+            ]))
+            ->flip();
+
+        if (OfxService::pareceOfx($conteudo)) {
+            $ofx = app(OfxService::class)->ler($conteudo);
+            $linhas = [];
+            foreach (array_slice($ofx['transacoes'], 0, self::MAXIMO_LINHAS) as $t) {
+                // No OFX, débito é sempre negativo (inclusive compras no cartão).
+                $linhas[] = $this->montarLinha($t['data'], $t['valor'], $t['descricao'], $fatura || $ofx['cartao'], false, $existentes, $t['id']);
+            }
+
+            return $linhas;
+        }
+
+        return $this->lerCsv($conteudo, $fatura, $existentes);
+    }
+
+    private function lerCsv(string $conteudo, bool $fatura, $existentes): array
     {
         $conteudo = $this->paraUtf8($conteudo);
         $linhas = preg_split('/\r\n|\r|\n/', trim($conteudo));
@@ -37,11 +63,6 @@ class ExtratoCsvService
         $separador = substr_count($linhas[0], ';') > substr_count($linhas[0], ',') ? ';' : ',';
         $cabecalho = array_map(fn ($c) => $this->normalizar($c), str_getcsv($linhas[0], $separador, '"', ''));
         $indices = $this->localizarColunas($cabecalho);
-
-        $existentes = $user->transactions()
-            ->get(['data', 'valor', 'descricao'])
-            ->map(fn ($t) => $t->data->format('Y-m-d').'|'.number_format($t->valor, 2, '.', '').'|'.mb_strtolower((string) $t->descricao))
-            ->flip();
 
         $saida = [];
         foreach (array_slice($linhas, 1, self::MAXIMO_LINHAS) as $linha) {
@@ -54,38 +75,14 @@ class ExtratoCsvService
             if ($data === null || $bruto === '' || ! is_numeric(ler_numero($bruto))) {
                 continue;
             }
-
             $valor = (float) ler_numero($bruto);
             if ($valor == 0.0) {
                 continue;
             }
             $descricao = mb_substr(trim((string) ($campos[$indices['descricao']] ?? '')), 0, 80);
 
-            $aviso = null;
-            if ($fatura) {
-                $tipo = 'despesa';
-                $incluir = $valor > 0;
-                $aviso = $valor < 0 ? 'Pagamento ou estorno' : null;
-            } else {
-                $tipo = $valor < 0 ? 'despesa' : 'receita';
-                $incluir = true;
-            }
-            $valor = abs($valor);
-
-            if (isset($existentes[$data.'|'.number_format($valor, 2, '.', '').'|'.mb_strtolower($descricao)])) {
-                $incluir = false;
-                $aviso = 'Já lançado';
-            }
-
-            $saida[] = [
-                'data' => $data,
-                'descricao' => $descricao,
-                'valor' => round($valor, 2),
-                'tipo' => $tipo,
-                'categoria' => $this->sugerirCategoria($descricao, $tipo),
-                'incluir' => $incluir,
-                'aviso' => $aviso,
-            ];
+            // Na fatura em CSV (ex.: Nubank) o gasto vem positivo; no extrato, negativo.
+            $saida[] = $this->montarLinha($data, $valor, $descricao, $fatura, $fatura, $existentes, null);
         }
 
         if ($saida === []) {
@@ -93,6 +90,44 @@ class ExtratoCsvService
         }
 
         return $saida;
+    }
+
+    /**
+     * @param  bool  $gastoPositivo  true quando o arquivo traz gastos com sinal positivo
+     */
+    private function montarLinha(string $data, float $valor, string $descricao, bool $fatura, bool $gastoPositivo, $existentes, ?string $externalId): array
+    {
+        $ehGasto = $gastoPositivo ? $valor > 0 : $valor < 0;
+        $aviso = null;
+        $incluir = true;
+
+        if ($fatura) {
+            $tipo = 'despesa';
+            if (! $ehGasto) {
+                $incluir = false;
+                $aviso = 'Pagamento ou estorno';
+            }
+        } else {
+            $tipo = $ehGasto ? 'despesa' : 'receita';
+        }
+        $valor = round(abs($valor), 2);
+
+        $chave = $data.'|'.number_format($valor, 2, '.', '').'|'.mb_strtolower($descricao);
+        if (isset($existentes[$chave]) || ($externalId && isset($existentes['id:'.$externalId]))) {
+            $incluir = false;
+            $aviso = 'Já lançado';
+        }
+
+        return [
+            'data' => $data,
+            'descricao' => $descricao,
+            'valor' => $valor,
+            'tipo' => $tipo,
+            'categoria' => $this->sugerirCategoria($descricao, $tipo),
+            'incluir' => $incluir,
+            'aviso' => $aviso,
+            'external_id' => $externalId,
+        ];
     }
 
     public function sugerirCategoria(string $descricao, string $tipo): string

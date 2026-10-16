@@ -1,13 +1,32 @@
 @php
     $menu = [
-        ['rota' => 'dashboard', 'nome' => 'Visão geral', 'icone' => 'home'],
-        ['rota' => 'carteira.index', 'nome' => 'Carteira', 'icone' => 'wallet'],
-        ['rota' => 'aporte.index', 'nome' => 'Regra de aporte', 'icone' => 'target'],
-        ['rota' => 'orcamento.index', 'nome' => 'Orçamento', 'icone' => 'receipt', 'ativa' => 'orcamento.*'],
-        ['rota' => 'objetivos.index', 'nome' => 'Objetivos', 'icone' => 'flag'],
-        ['rota' => 'simuladores.juros', 'nome' => 'Juros compostos', 'icone' => 'growth'],
-        ['rota' => 'simuladores.financiamento', 'nome' => 'Financiamento', 'icone' => 'house'],
+        '' => [
+            ['rota' => 'dashboard', 'nome' => 'Visão geral', 'icone' => 'home'],
+            ['rota' => 'patrimonio.index', 'nome' => 'Patrimônio', 'icone' => 'layers'],
+        ],
+        'Dinheiro' => [
+            ['rota' => 'contas.index', 'nome' => 'Contas', 'icone' => 'bank'],
+            ['rota' => 'cartoes.index', 'nome' => 'Cartões', 'icone' => 'card', 'ativa' => 'cartoes.*'],
+            ['rota' => 'orcamento.index', 'nome' => 'Orçamento', 'icone' => 'receipt', 'ativa' => 'orcamento.*'],
+            ['rota' => 'objetivos.index', 'nome' => 'Objetivos', 'icone' => 'flag'],
+        ],
+        'Investimentos' => [
+            ['rota' => 'carteira.index', 'nome' => 'Carteira', 'icone' => 'wallet'],
+            ['rota' => 'bolsa.index', 'nome' => 'Bolsa', 'icone' => 'candles', 'ativa' => 'bolsa.*'],
+            ['rota' => 'dividendos.index', 'nome' => 'Dividendos', 'icone' => 'coins'],
+            ['rota' => 'aporte.index', 'nome' => 'Regra de aporte', 'icone' => 'target'],
+        ],
+        'Imóvel' => [
+            ['rota' => 'imovel.index', 'nome' => 'Meu financiamento', 'icone' => 'house', 'ativa' => 'imovel.*'],
+        ],
+        'Simuladores' => [
+            ['rota' => 'simuladores.juros', 'nome' => 'Juros compostos', 'icone' => 'growth'],
+            ['rota' => 'simuladores.financiamento', 'nome' => 'Financiamento', 'icone' => 'calc'],
+        ],
     ];
+    if (Auth::user()->is_admin) {
+        $menu['Administração'] = [['rota' => 'admin.convites.index', 'nome' => 'Convites', 'icone' => 'user']];
+    }
 @endphp
 <!DOCTYPE html>
 <html lang="pt-BR" translate="no">
@@ -22,10 +41,13 @@
             <span class="brand-name">FantInvest</span>
         </a>
         <nav class="nav" aria-label="Módulos">
-            @foreach ($menu as $item)
-                <a href="{{ route($item['rota']) }}" @if (request()->routeIs($item['ativa'] ?? $item['rota'])) aria-current="page" @endif>
-                    <x-icone :nome="$item['icone']" /><span>{{ $item['nome'] }}</span>
-                </a>
+            @foreach ($menu as $grupo => $itens)
+                @if ($grupo !== '')<span class="nav-grupo">{{ $grupo }}</span>@endif
+                @foreach ($itens as $item)
+                    <a href="{{ route($item['rota']) }}" @if (request()->routeIs($item['ativa'] ?? $item['rota'])) aria-current="page" @endif>
+                        <x-icone :nome="$item['icone']" /><span>{{ $item['nome'] }}</span>
+                    </a>
+                @endforeach
             @endforeach
         </nav>
         <div class="side-foot">

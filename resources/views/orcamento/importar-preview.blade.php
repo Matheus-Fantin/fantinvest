@@ -9,11 +9,12 @@
                     get total() { return this.marcadas.reduce((s, l) => s + (l.tipo === 'receita' ? 1 : -1) * Number(l.valor), 0) },
                     todas(v) { this.linhas.forEach(l => l.incluir = v) } }">
         @csrf
+        <input type="hidden" name="origem" value="{{ $origem }}">
         <div class="page-head">
             <div>
                 <div class="eyebrow">Importar extrato</div>
                 <h1>Revise antes de salvar</h1>
-                <p>Ajuste a categoria das linhas e desmarque o que não deve entrar no orçamento.</p>
+                <p>Ajuste a categoria das linhas e desmarque o que não deve entrar no orçamento.@if ($destino) Os lançamentos vão para <strong>{{ $destino }}</strong>.@endif</p>
             </div>
             <div class="row">
                 <a class="btn" href="{{ route('orcamento.importar') }}">Escolher outro arquivo</a>
@@ -46,6 +47,7 @@
                                     <input type="checkbox" value="1" x-model="l.incluir" :name="`linhas[${i}][incluir]`" style="accent-color:var(--accent);width:16px;height:16px" :aria-label="'Importar ' + l.descricao">
                                     <input type="hidden" :name="`linhas[${i}][data]`" :value="l.data">
                                     <input type="hidden" :name="`linhas[${i}][valor]`" :value="l.valor">
+                                    <input type="hidden" :name="`linhas[${i}][external_id]`" :value="l.external_id || ''">
                                 </td>
                                 <td class="num faint" x-text="l.data.split('-').reverse().join('/')"></td>
                                 <td style="min-width:200px"><input class="in" :name="`linhas[${i}][descricao]`" x-model="l.descricao" maxlength="80"></td>

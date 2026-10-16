@@ -23,12 +23,12 @@
     <div class="grid g4">
         <div class="card kpi">
             <span class="label">Patrimônio investido</span>
-            <span class="value">{{ brl($resumo['total'], 0) }}</span>
+            <span class="value">{{ brl($resumo['total']) }}</span>
             <span class="sub">{{ $quantidadeAtivos }} {{ $quantidadeAtivos === 1 ? 'ativo' : 'ativos' }} na carteira</span>
         </div>
         <div class="card kpi">
             <span class="label">Resultado da carteira</span>
-            <span class="value {{ $resumo['resultado'] >= 0 ? 'up' : 'down' }}">{{ $resumo['resultado'] >= 0 ? '+' : '' }}{{ brl($resumo['resultado'], 0) }}</span>
+            <span class="value {{ $resumo['resultado'] >= 0 ? 'up' : 'down' }}">{{ $resumo['resultado'] >= 0 ? '+' : '' }}{{ brl($resumo['resultado']) }}</span>
             <span class="sub">
                 @if ($resumo['custo'] > 0)
                     {{ $resumo['resultado'] >= 0 ? '+' : '' }}{{ pct($resumo['resultado'] / $resumo['custo'] * 100) }} sobre o custo
@@ -39,8 +39,8 @@
         </div>
         <div class="card kpi">
             <span class="label">Sobra do mês</span>
-            <span class="value {{ $mesAtual['sobra'] < 0 ? 'down' : '' }}">{{ brl($mesAtual['sobra'], 0) }}</span>
-            <span class="sub">Receitas {{ brl($mesAtual['receitas'], 0) }} · gastos {{ brl($mesAtual['gastos'], 0) }}</span>
+            <span class="value {{ $mesAtual['sobra'] < 0 ? 'down' : '' }}">{{ brl($mesAtual['sobra']) }}</span>
+            <span class="sub">Receitas {{ brl($mesAtual['receitas']) }} · gastos {{ brl($mesAtual['gastos']) }}</span>
         </div>
         <div class="card kpi">
             <span class="label">Taxa de poupança</span>
@@ -69,6 +69,42 @@
             <div class="chart-box short">
                 <canvas data-grafico="fluxo" data-dados='@json($historico)' role="img" aria-label="Receitas e gastos dos últimos seis meses"></canvas>
             </div>
+        </div>
+    </div>
+
+    @php $totalCompromissos = collect($compromissos)->sum(fn ($m) => $m['parcelas'] + $m['financiamento']); @endphp
+    <div class="grid g2">
+        <div class="card">
+            <div class="card-head">
+                <div><h2>Contas e cartões</h2><p>Saldo de hoje e faturas do mês.</p></div>
+                <a class="btn sm ghost" href="{{ route('contas.index') }}">Ver contas</a>
+            </div>
+            @if ($contas->isEmpty() && $cartoes->isEmpty())
+                <div class="empty"><p>Cadastre suas contas e cartões para ver o saldo e as faturas aqui.</p><a class="btn sm primary" href="{{ route('contas.index') }}"><x-icone nome="plus" />Cadastrar conta</a></div>
+            @else
+                @foreach ($contas as $c)
+                    <div class="list-row"><span><strong>{{ $c->nome }}</strong> <span class="small faint">{{ $c->nomeTipo() }}</span></span><strong class="num {{ $c->saldo < 0 ? 'down' : '' }}">{{ brl($c->saldo) }}</strong></div>
+                @endforeach
+                @foreach ($cartoes as $k)
+                    <div class="list-row">
+                        <span><a class="link" href="{{ route('cartoes.show', $k['cartao']) }}">Cartão {{ $k['cartao']->nome }}</a> <span class="small faint">fatura de {{ mes_extenso($k['atual']['fatura']) }}, vence {{ $k['atual']['vencimento']->format('d/m') }}</span></span>
+                        <strong class="num down">{{ brl($k['atual']['total']) }}</strong>
+                    </div>
+                @endforeach
+                <div class="list-row"><span class="muted">Saldo em contas − faturas em aberto</span><strong class="num">{{ brl($contas->sum('saldo') - $cartoes->sum('em_aberto')) }}</strong></div>
+            @endif
+        </div>
+        <div class="card">
+            <div class="card-head">
+                <div><h2>Já comprometido</h2><p>Parcelas e financiamento nos próximos 12 meses.</p></div>
+                @if ($totalCompromissos > 0)<span class="chip warn">{{ brl($totalCompromissos) }}</span>@endif
+            </div>
+            @if ($totalCompromissos > 0)
+                <x-legenda :itens="[['s2', 'Parcelas de compras', true], ['s1', 'Financiamento', true]]" />
+                <div class="chart-box short"><canvas data-grafico="compromissos" data-dados='@json($compromissos)' role="img" aria-label="Valores já comprometidos por mês"></canvas></div>
+            @else
+                <div class="empty"><p>Nenhuma parcela futura. Compras parceladas e o financiamento aparecem aqui.</p></div>
+            @endif
         </div>
     </div>
 
@@ -110,14 +146,14 @@
             </div>
             <div class="stack">
                 <div class="row between">
-                    <span class="kpi"><span class="label">Guardado</span><span class="value">{{ brl($reserva['atual'], 0) }}</span></span>
-                    <span class="kpi" style="text-align:right"><span class="label">Meta</span><span class="value">{{ brl($reserva['meta'], 0) }}</span></span>
+                    <span class="kpi"><span class="label">Guardado</span><span class="value">{{ brl($reserva['atual']) }}</span></span>
+                    <span class="kpi" style="text-align:right"><span class="label">Meta</span><span class="value">{{ brl($reserva['meta']) }}</span></span>
                 </div>
                 <div class="meter"><div style="width:{{ $reserva['percentual'] }}%"></div></div>
                 <div class="row between small">
                     <span class="muted">
                         {{ pct($reserva['percentual'], 0) }} da meta
-                        @if ($reserva['meta'] > $reserva['atual']) · faltam {{ brl($reserva['meta'] - $reserva['atual'], 0) }} @endif
+                        @if ($reserva['meta'] > $reserva['atual']) · faltam {{ brl($reserva['meta'] - $reserva['atual']) }} @endif
                     </span>
                     @if ($reserva['percentual'] >= 100)
                         <span class="chip good"><x-icone nome="check" />Completa</span>
@@ -128,7 +164,7 @@
                 <form method="POST" action="{{ route('reserva.update') }}" class="form-grid">
                     @csrf
                     @method('PUT')
-                    <x-campo nome="reserva_atual" rotulo="Valor guardado" pre="R$" :valor="old('reserva_atual', valor_input($reserva['atual']))" />
+                    <x-campo nome="reserva_atual" rotulo="Valor guardado" pre="R$" :valor="old('reserva_atual', moeda_input($reserva['atual']))" />
                     <x-campo nome="reserva_meses" rotulo="Meses de cobertura" suf="meses" :valor="old('reserva_meses', $reserva['meses'])" />
                     <div class="full"><button class="btn" type="submit">Salvar reserva</button></div>
                 </form>
@@ -150,12 +186,12 @@
                     <div class="stack" style="gap:6px">
                         <div class="row between small">
                             <strong>{{ $g->nome }}</strong>
-                            <span class="num">{{ brl($g->valor_atual, 0) }} <span class="faint">/ {{ brl($g->valor_alvo, 0) }}</span></span>
+                            <span class="num">{{ brl($g->valor_atual) }} <span class="faint">/ {{ brl($g->valor_alvo) }}</span></span>
                         </div>
                         <div class="meter"><div style="width:{{ $g->percentual() }}%"></div></div>
                         <span class="small muted">
                             @if ($g->concluido()) Concluído
-                            @elseif ($mensal !== null) Guardar {{ brl($mensal, 0) }}/mês até {{ $g->data_alvo->translatedFormat('M/Y') }}
+                            @elseif ($mensal !== null) Guardar {{ brl($mensal) }}/mês até {{ $g->data_alvo->translatedFormat('M/Y') }}
                             @else Sem data definida @endif
                         </span>
                     </div>

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Asset;
+use App\Models\Operation;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -166,23 +167,17 @@ class CarteiraService
     /**
      * Aplica o plano na carteira (quantidade e preço médio) e lança o aporte no orçamento.
      */
-    public function registrarAporte(User $user, array $plano): float
+    public function registrarAporte(User $user, array $plano, ?int $contaId = null): float
     {
-        return DB::transaction(function () use ($user, $plano) {
+        return DB::transaction(function () use ($user, $plano, $contaId) {
             $total = 0.0;
 
             foreach ($plano['compras'] as $compra) {
                 /** @var Asset $ativo */
                 $ativo = $compra['ativo'];
-
-                // Cotas inteiras (B3) ou valor livre (renda fixa e cripto): em ambos os casos a
-                // quantidade cresce e o preço médio vira a média ponderada pelo que foi pago.
-                $novaQtd = $compra['cotas'] ?? $compra['valor'] / $ativo->cotacao;
-                $quantidade = $ativo->quantidade + $novaQtd;
-                $ativo->preco_medio = ($ativo->quantidade * $ativo->preco_medio + $compra['valor']) / $quantidade;
-                $ativo->quantidade = $quantidade;
-
-                $ativo->save();
+                // Cotas inteiras (B3) ou valor livre (renda fixa e cripto).
+                $quantidade = $compra['cotas'] ?? $compra['valor'] / $ativo->cotacao;
+                $this->aplicarOperacao($ativo, 'compra', now()->toDateString(), $quantidade, $ativo->cotacao, 0, $contaId);
                 $total += $compra['valor'];
             }
 
@@ -193,10 +188,45 @@ class CarteiraService
                     'categoria' => 'Investimentos',
                     'descricao' => 'Aporte na carteira',
                     'valor' => round($total, 2),
+                    'account_id' => $contaId,
                 ]);
             }
 
             return $total;
         });
+    }
+
+    /**
+     * Registra uma compra ou venda e atualiza a posição do ativo.
+     * Compra: o preço médio vira a média ponderada (taxas entram no custo).
+     * Venda: a quantidade cai, o preço médio se mantém e o lucro realizado fica na operação.
+     */
+    public function aplicarOperacao(Asset $ativo, string $tipo, string $data, float $quantidade, float $preco, float $taxas = 0, ?int $contaId = null): Operation
+    {
+        if ($tipo === 'venda' && $quantidade > $ativo->quantidade + 1e-9) {
+            throw new \InvalidArgumentException('Você tem '.numero($ativo->quantidade, 8)." de {$ativo->ticker}; não dá para vender mais que isso.");
+        }
+
+        $resultado = null;
+        if ($tipo === 'compra') {
+            $novaQtd = $ativo->quantidade + $quantidade;
+            $ativo->preco_medio = $novaQtd > 0 ? ($ativo->quantidade * $ativo->preco_medio + $quantidade * $preco + $taxas) / $novaQtd : 0;
+            $ativo->quantidade = $novaQtd;
+        } else {
+            $resultado = round(($preco - $ativo->preco_medio) * $quantidade - $taxas, 2);
+            $ativo->quantidade = max(0, $ativo->quantidade - $quantidade);
+        }
+        $ativo->save();
+
+        return $ativo->user->operations()->create([
+            'asset_id' => $ativo->id,
+            'tipo' => $tipo,
+            'data' => $data,
+            'quantidade' => $quantidade,
+            'preco' => $preco,
+            'taxas' => $taxas,
+            'resultado' => $resultado,
+            'account_id' => $contaId,
+        ]);
     }
 }
