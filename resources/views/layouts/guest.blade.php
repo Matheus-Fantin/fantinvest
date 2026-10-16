@@ -15,5 +15,8 @@
         </div>
     </div>
 </div>
+@if (session('aviso'))
+    <div class="flash" role="status" x-data="{ v: true }" x-show="v" x-init="setTimeout(() => v = false, 6000)" x-transition.opacity>{{ session('aviso') }}</div>
+@endif
 </body>
 </html>
