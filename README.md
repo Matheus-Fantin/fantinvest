@@ -99,3 +99,32 @@ php artisan test
 ## Tema
 
 O app segue o tema claro/escuro do sistema. O botão "Tema" na barra lateral alterna entre sistema, claro e escuro.
+
+## Deploy no Laravel Cloud
+
+1. **New application** → importe o repositório `Matheus-Fantin/fantinvest` (região: São Paulo, se houver; senão US East).
+2. No canvas do ambiente, **adicione um banco** Laravel Serverless Postgres (ou Laravel MySQL) e ligue ao ambiente. O SQLite não serve em produção: o disco é apagado a cada deploy. As variáveis `DB_*` são preenchidas sozinhas.
+3. Clique no **App cluster** e ligue o **Scheduler** (atualiza as cotações a cada 15 min).
+4. **Build commands:**
+   ```
+   composer install --no-dev --optimize-autoloader
+   npm ci
+   npm run build
+   php artisan optimize
+   ```
+   **Deploy command:** `php artisan migrate --force`
+5. **Variáveis de ambiente:**
+   ```
+   APP_NAME=FantInvest
+   APP_LOCALE=pt_BR
+   APP_TIMEZONE=America/Sao_Paulo
+   SESSION_LIFETIME=720
+   QUEUE_CONNECTION=sync
+   CADASTRO_ABERTO=false
+   BRAPI_TOKEN=seu_token
+   BRAPI_TICKERS_POR_REQUISICAO=1
+   COINGECKO_API_KEY=
+   ```
+6. **Deploy.** Logo depois, abra `/register` e crie a sua conta: a primeira conta vira administradora e as próximas só entram por convite.
+
+Não rode `php artisan db:seed` em produção: ele cria a conta de demonstração com a senha `password`.
