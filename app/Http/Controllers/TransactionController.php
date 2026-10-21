@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreTransactionRequest;
 use App\Models\Transaction;
+use App\Services\CartaoService;
 use App\Services\LancamentoService;
 use App\Services\OrcamentoService;
 use Illuminate\Http\RedirectResponse;
@@ -14,7 +15,7 @@ use Illuminate\View\View;
 
 class TransactionController extends Controller
 {
-    public function index(Request $request, OrcamentoService $orcamento, LancamentoService $lancamentos): View
+    public function index(Request $request, OrcamentoService $orcamento, LancamentoService $lancamentos, CartaoService $cartoes): View
     {
         $mes = $request->query('mes');
         if (! is_string($mes) || ! preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $mes)) {
@@ -34,6 +35,11 @@ class TransactionController extends Controller
             'tipo' => $request->query('tipo') === 'receita' ? 'receita' : 'despesa',
             'contas' => $user->accounts()->where('arquivada', false)->orderBy('nome')->get(),
             'cartoes' => $user->cards()->orderBy('nome')->get(),
+            'faturas' => $user->cards()->orderBy('nome')->get()->map(fn ($c) => [
+                'cartao' => $c,
+                'atual' => $cartoes->faturas($c)[$c->faturaDaCompra(now())],
+                'em_aberto' => $cartoes->emAberto($c),
+            ]),
             'compromissos' => $lancamentos->compromissosFuturos($user),
         ]);
     }

@@ -40,6 +40,12 @@ class DashboardController extends Controller
             'classes' => $classes,
             'faltam' => $classes->where('meta', '>', 0)->sortByDesc(fn ($c) => $c['meta'] - $c['atual'])->values(),
             'historico' => $orcamento->historico($user, $mes),
+            'primeiroNome' => explode(' ', trim($user->name))[0],
+            'passos' => [
+                'lancamento' => $user->transactions()->exists(),
+                'investimento' => $user->assets()->exists(),
+                'objetivo' => $user->goals()->exists(),
+            ],
             'contas' => $contas->comSaldos($user),
             'cartoes' => $user->cards()->orderBy('nome')->get()->map(fn ($c) => [
                 'cartao' => $c,

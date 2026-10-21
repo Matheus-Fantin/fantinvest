@@ -63,7 +63,29 @@ class BrapiCliente
      */
     public function pesquisar(string $termo, int $limite = 20): array
     {
-        $resposta = $this->get('/quote/list', ['search' => $termo, 'limit' => $limite, 'sortBy' => 'volume', 'sortOrder' => 'desc']);
+        return $this->listar(['search' => $termo, 'limit' => $limite, 'sortBy' => 'volume', 'sortOrder' => 'desc']);
+    }
+
+    /**
+     * Ranking do dia na B3, sem precisar pesquisar.
+     *
+     * @param  string  $ordenarPor  volume (mais negociadas) ou change (variação do dia)
+     * @param  string  $ordem  desc (maiores) ou asc (menores)
+     * @param  string|null  $tipo  stock (ações), fund (FIIs) ou bdr
+     */
+    public function ranking(string $ordenarPor, string $ordem = 'desc', ?string $tipo = 'stock', int $limite = 20): array
+    {
+        return $this->listar(array_filter([
+            'sortBy' => $ordenarPor,
+            'sortOrder' => $ordem,
+            'limit' => $limite,
+            'type' => $tipo,
+        ]));
+    }
+
+    private function listar(array $query): array
+    {
+        $resposta = $this->get('/quote/list', $query);
         if (! $resposta) {
             return [];
         }

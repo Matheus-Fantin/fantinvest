@@ -17,13 +17,13 @@
          ]))">
         <span class="live-dot" :class="{ busy: carregando, ok: !carregando && recente }"></span>
         <span x-text="texto">Cotações automáticas</span>
-        <span class="faint">· {{ $ativos->count() }} {{ $ativos->count() === 1 ? 'ativo' : 'ativos' }} via API (B3 com até 30 min de atraso no plano gratuito)</span>
+        <span class="faint" title="B3 pela brapi.dev (até 30 min de atraso no plano gratuito); cripto pela CoinGecko">· {{ $ativos->count() }} {{ $ativos->count() === 1 ? 'ativo' : 'ativos' }} automáticos</span>
         <button type="button" class="btn sm ghost" x-on:click="atualizar(true)" :disabled="carregando"><x-icone nome="refresh" />Atualizar agora</button>
         <template x-if="pendente">
             <button type="button" class="btn sm primary" x-on:click="location.reload()">Ver valores novos</button>
         </template>
         @if ($semToken)
-            <span class="chip warn"><x-icone nome="alert" />Configure BRAPI_TOKEN no .env</span>
+            <span class="chip warn" title="Coloque o token gratuito da brapi.dev em BRAPI_TOKEN"><x-icone nome="alert" />Falta o token da brapi</span>
         @endif
     </div>
 @endif

@@ -55,7 +55,7 @@ class CardController extends Controller
     {
         $cartao = $request->user()->cards()->create($this->validar($request));
 
-        return back()->with('sucesso', "Cartão \"{$cartao->nome}\" criado.");
+        return back()->with('sucesso', "Cartão \"{$cartao->nome}\" criado.")->with('origem_nova', 'cartao:'.$cartao->id);
     }
 
     public function update(Request $request, Card $card): RedirectResponse
@@ -99,7 +99,7 @@ class CardController extends Controller
 
     private function validar(Request $request): array
     {
-        $request->merge(['limite' => ler_numero((string) $request->input('limite', '0'))]);
+        $request->merge(['limite' => ler_numero((string) ($request->input('limite') ?: '0'))]);
 
         return $request->validate([
             'nome' => ['required', 'string', 'max:40'],

@@ -31,7 +31,7 @@ class AccountController extends Controller
     {
         $conta = $request->user()->accounts()->create($this->validar($request));
 
-        return back()->with('sucesso', "Conta \"{$conta->nome}\" criada.");
+        return back()->with('sucesso', "\"{$conta->nome}\" adicionado.")->with('origem_nova', 'conta:'.$conta->id);
     }
 
     public function update(Request $request, Account $account): RedirectResponse
@@ -89,7 +89,7 @@ class AccountController extends Controller
 
     private function validar(Request $request): array
     {
-        $request->merge(['saldo_inicial' => ler_numero((string) $request->input('saldo_inicial', '0'))]);
+        $request->merge(['saldo_inicial' => ler_numero((string) ($request->input('saldo_inicial') ?: '0'))]);
 
         return $request->validate([
             'nome' => ['required', 'string', 'max:40'],

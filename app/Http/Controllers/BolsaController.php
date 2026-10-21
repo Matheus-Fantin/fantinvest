@@ -21,9 +21,24 @@ class BolsaController extends Controller
     {
         $user = $request->user();
         $termo = trim((string) $request->query('q', ''));
-        $resultados = $termo !== ''
-            ? Cache::remember('bolsa:busca:'.mb_strtolower($termo), now()->addMinutes(10), fn () => $brapi->pesquisar($termo))
-            : [];
+        $resultados = $termo !== '' ? $brapi->pesquisar($termo) : [];
+
+        // Rankings do dia, sem precisar pesquisar (guardados por 10 minutos para não gastar a cota da API).
+        $rankings = [];
+        if ($termo === '') {
+            foreach ([
+                'negociadas' => ['volume', 'desc', 'stock'],
+                'altas' => ['change', 'desc', 'stock'],
+                'baixas' => ['change', 'asc', 'stock'],
+                'fiis' => ['volume', 'desc', 'fund'],
+            ] as $chave => [$por, $ordem, $tipo]) {
+                $rankings[$chave] = Cache::get("bolsa:ranking:$chave") ?? tap($brapi->ranking($por, $ordem, $tipo, 20), function ($lista) use ($chave) {
+                    if ($lista !== []) {
+                        Cache::put("bolsa:ranking:$chave", $lista, now()->addMinutes(10));
+                    }
+                });
+            }
+        }
 
         $posicoes = $user->assets()->whereIn('classe', self::CLASSES_BOLSA)->where('quantidade', '>', 0)->get()
             ->sortByDesc(fn (Asset $a) => $a->valor())->values();
@@ -37,6 +52,7 @@ class BolsaController extends Controller
         return view('bolsa.index', [
             'termo' => $termo,
             'resultados' => $resultados,
+            'rankings' => $rankings,
             'buscou' => $termo !== '',
             'posicoes' => $posicoes,
             'total' => $posicoes->sum(fn (Asset $a) => $a->valor()),

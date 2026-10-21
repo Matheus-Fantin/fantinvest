@@ -1,43 +1,41 @@
 <x-app-layout titulo="Bolsa">
     <div class="page-head">
         <div>
-            <div class="eyebrow">Investimentos</div>
-            <h1>Bolsa de valores</h1>
-            <p>Pesquise ações, FIIs, ETFs e BDRs da B3, veja o gráfico de cada uma e registre suas compras e vendas. A carteira, o preço médio e o lucro saem das operações.</p>
+            <h1>Bolsa hoje</h1>
+            <p>As ações que mais estão sendo negociadas, as que mais subiram e as que mais caíram hoje na B3. Toque em uma para ver o gráfico e registrar compra ou venda.</p>
         </div>
     </div>
 
     @if ($semToken)
-        <div class="banner warn"><span>Para pesquisar e ver cotações, coloque seu token gratuito da brapi.dev em <strong>BRAPI_TOKEN</strong> no arquivo .env.</span></div>
+        <div class="banner warn"><span>Para ver a bolsa, coloque seu token gratuito da brapi.dev em <strong>BRAPI_TOKEN</strong> nas variáveis de ambiente.</span></div>
     @endif
 
-    <form method="GET" action="{{ route('bolsa.index') }}" class="card stack">
-        <div class="search-box">
-            <div class="in-group"><span class="affix"><x-icone nome="search" width="16" height="16" /></span><input class="in" name="q" value="{{ $termo }}" placeholder="Código ou nome: PETR4, Itaúsa, HGLG11, IVVB11…" autofocus aria-label="Pesquisar ativo"></div>
-            <button class="btn primary" type="submit">Pesquisar</button>
-        </div>
-        @if ($buscou)
-            @if (empty($resultados))
-                <p class="muted small">Nada encontrado para "{{ $termo }}". Confira o código ou tente abrir direto: <a class="link" href="{{ route('bolsa.show', $termo) }}">{{ mb_strtoupper($termo) }}</a>.</p>
-            @else
-                <div class="table-wrap"><table>
-                    <thead><tr><th>Ativo</th><th>Nome</th><th>Setor</th><th class="n">Preço</th><th class="n">Dia</th><th></th></tr></thead>
-                    <tbody>
-                        @foreach ($resultados as $r)
-                            <tr>
-                                <td><a class="ticker link" href="{{ route('bolsa.show', $r['ticker']) }}">{{ $r['ticker'] }}</a></td>
-                                <td class="muted" style="white-space:normal;min-width:160px">{{ $r['nome'] }}</td>
-                                <td class="faint small">{{ $r['setor'] }}</td>
-                                <td class="n">{{ $r['preco'] !== null ? brl($r['preco']) : '—' }}</td>
-                                <td class="n {{ ($r['variacao'] ?? 0) >= 0 ? 'up' : 'down' }}">@if ($r['variacao'] !== null){{ $r['variacao'] >= 0 ? '▲' : '▼' }} {{ pct(abs($r['variacao']), 2) }}@endif</td>
-                                <td><a class="btn sm" href="{{ route('bolsa.show', $r['ticker']) }}">Abrir</a></td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table></div>
-            @endif
-        @endif
+    <form method="GET" action="{{ route('bolsa.index') }}" class="search-box">
+        <div class="in-group"><span class="affix"><x-icone nome="search" width="16" height="16" /></span><input class="in" name="q" value="{{ $termo }}" placeholder="Buscar: Petrobras, PETR4, Itaú, HGLG11…" aria-label="Buscar ativo"></div>
+        <button class="btn primary" type="submit">Buscar</button>
     </form>
+
+    @if ($buscou)
+        <div class="card">
+            <div class="card-head"><div><h2>Resultado para "{{ $termo }}"</h2></div><a class="btn sm ghost" href="{{ route('bolsa.index') }}">Voltar aos rankings</a></div>
+            <x-lista-ativos :itens="$resultados" vazio="Nada encontrado. Confira o nome ou o código." />
+        </div>
+    @else
+        <div class="card" x-data="{ aba: 'negociadas' }">
+            <div class="seg ranking-abas" role="tablist" aria-label="Rankings">
+                <button type="button" role="tab" x-on:click="aba = 'negociadas'" :aria-pressed="aba === 'negociadas'">Mais negociadas</button>
+                <button type="button" role="tab" x-on:click="aba = 'altas'" :aria-pressed="aba === 'altas'">Maiores altas</button>
+                <button type="button" role="tab" x-on:click="aba = 'baixas'" :aria-pressed="aba === 'baixas'">Maiores baixas</button>
+                <button type="button" role="tab" x-on:click="aba = 'fiis'" :aria-pressed="aba === 'fiis'">FIIs</button>
+            </div>
+            @foreach (['negociadas' => 'As 20 ações com maior volume negociado hoje.', 'altas' => 'As 20 ações que mais subiram hoje.', 'baixas' => 'As 20 ações que mais caíram hoje.', 'fiis' => 'Os 20 fundos imobiliários mais negociados hoje.'] as $chave => $texto)
+                <div x-show="aba === '{{ $chave }}'" @if ($chave !== 'negociadas') x-cloak @endif>
+                    <p class="small muted" style="margin:12px 0 4px">{{ $texto }} Atualiza a cada 10 minutos (cerca de 30 min de atraso no plano gratuito).</p>
+                    <x-lista-ativos :itens="$rankings[$chave] ?? []" vazio="Não consegui carregar agora. Confira o BRAPI_TOKEN ou tente em alguns minutos." />
+                </div>
+            @endforeach
+        </div>
+    @endif
 
     <div class="grid g4">
         <div class="card kpi"><span class="label">Em ações, FIIs e exterior</span><span class="value">{{ brl($total) }}</span><span class="sub">{{ $posicoes->count() }} ativos</span></div>
