@@ -22,6 +22,8 @@
         @endif
     </div>
 
+    <x-busca-ativos />
+
     @if (! $detalhe)
         <div class="banner warn"><span>Não consegui buscar a cotação de {{ $ticker }}. Confira o código e se o BRAPI_TOKEN está no .env. Você ainda pode registrar operações com o preço que pagou.</span></div>
     @endif

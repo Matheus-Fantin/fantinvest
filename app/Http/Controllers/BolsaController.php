@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Asset;
 use App\Services\CarteiraService;
 use App\Services\Cotacoes\BrapiCliente;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -62,6 +63,32 @@ class BolsaController extends Controller
             'operacoes' => $user->operations()->with('asset')->orderByDesc('data')->orderByDesc('id')->limit(15)->get(),
             'semToken' => blank(config('cotacoes.brapi.token')),
         ]);
+    }
+
+    /** Sugestões da busca vindas da brapi (a lista local de ativos conhecidos é filtrada no navegador). */
+    public function sugestoes(Request $request, BrapiCliente $brapi): JsonResponse
+    {
+        $termo = mb_strtolower(trim((string) $request->query('q', '')));
+        if (mb_strlen($termo) < 2 || mb_strlen($termo) > 40) {
+            return response()->json([]);
+        }
+
+        $chave = 'bolsa:sugestoes:'.md5($termo);
+        $lista = Cache::get($chave);
+        if ($lista === null) {
+            $lista = array_slice($brapi->pesquisar($termo, 10), 0, 10);
+            if ($lista !== []) {
+                Cache::put($chave, $lista, now()->addMinutes(30));
+            }
+        }
+
+        return response()->json(array_map(fn ($a) => [
+            'ticker' => $a['ticker'],
+            'nome' => $a['nome'],
+            'preco' => $a['preco'],
+            'variacao' => $a['variacao'],
+            'logo' => $a['logo'],
+        ], $lista));
     }
 
     public function show(Request $request, string $ticker, BrapiCliente $brapi): View

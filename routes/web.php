@@ -41,6 +41,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/cartoes/{card}/pagar', [CardController::class, 'pagar'])->name('cartoes.pagar');
 
     Route::get('/bolsa', [BolsaController::class, 'index'])->name('bolsa.index');
+    Route::get('/bolsa/sugestoes', [BolsaController::class, 'sugestoes'])->middleware('throttle:90,1')->name('bolsa.sugestoes');
     Route::get('/bolsa/{ticker}', [BolsaController::class, 'show'])->name('bolsa.show');
     Route::post('/bolsa/{ticker}/operacao', [BolsaController::class, 'operacao'])->name('bolsa.operacao');
 

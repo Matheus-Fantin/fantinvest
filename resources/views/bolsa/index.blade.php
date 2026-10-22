@@ -10,10 +10,7 @@
         <div class="banner warn"><span>Para ver a bolsa, coloque seu token gratuito da brapi.dev em <strong>BRAPI_TOKEN</strong> nas variáveis de ambiente.</span></div>
     @endif
 
-    <form method="GET" action="{{ route('bolsa.index') }}" class="search-box">
-        <div class="in-group"><span class="affix"><x-icone nome="search" width="16" height="16" /></span><input class="in" name="q" value="{{ $termo }}" placeholder="Buscar: Petrobras, PETR4, Itaú, HGLG11…" aria-label="Buscar ativo"></div>
-        <button class="btn primary" type="submit">Buscar</button>
-    </form>
+    <x-busca-ativos :termo="$termo" />
 
     @if ($buscou)
         <div class="card">

@@ -7,6 +7,7 @@ import * as formato from './formato';
 import simuladorJuros from './simuladores/juros';
 import simuladorFinanciamento from './simuladores/financiamento';
 import cotacoesAoVivo from './cotacoes';
+import buscaAtivos from './busca-ativos';
 
 window.Alpine = Alpine;
 window.fmt = formato;
@@ -14,6 +15,7 @@ window.fmt = formato;
 Alpine.data('simuladorJuros', simuladorJuros);
 Alpine.data('simuladorFinanciamento', simuladorFinanciamento);
 Alpine.data('cotacoesAoVivo', cotacoesAoVivo);
+Alpine.data('buscaAtivos', buscaAtivos);
 
 // Campos em reais: ao sair do campo, mostra 1.234,56 (ponto no milhar, vírgula nos centavos).
 document.addEventListener('focusout', (e) => {
